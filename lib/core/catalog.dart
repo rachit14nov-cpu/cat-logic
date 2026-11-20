@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'daily.dart';
 import 'generator.dart';
+import 'level_pack.dart';
 import 'puzzle.dart';
 
 class LevelCatalog {
@@ -30,6 +31,14 @@ class LevelCatalog {
     if (index <= 0) return true;
     if (index >= campaign.length) return false;
     return completed.contains(campaign[index - 1].id);
+  }
+
+  factory LevelCatalog.fromPacked(List<int> campaignBytes, List<int> dailyBytes) {
+    return LevelCatalog(
+      campaign: LevelPack.decode(campaignBytes, daily: false),
+      daily: LevelPack.decode(dailyBytes, daily: true),
+      meta: const {},
+    );
   }
 
   factory LevelCatalog.fromJson(String campaignJson, String dailyJson) {

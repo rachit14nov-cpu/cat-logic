@@ -2,7 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
+import 'package:flutter/services.dart';
+
+import '../../core/ad_pacing.dart';
 import '../../core/daily.dart';
+import '../../core/economy.dart';
 import '../../core/puzzle.dart';
 import '../../data/progress_store.dart';
 import '../../game/play_session.dart';
@@ -41,6 +45,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   late PlaySession _session;
   Timer? _ticker;
   bool _recorded = false;
+  bool _needsHeart = false;
+  bool _needsAdHint = false;
 
   @override
   void initState() {
@@ -49,7 +55,12 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _session = PlaySession(
       puzzle: widget.request.level.toPuzzle(),
       autoMark: widget.progress.data.autoMark,
+      trackHearts: !widget.request.daily,
     );
+    widget.services.analytics.logEvent('level_start', {
+      'id': widget.request.level.id,
+      'daily': widget.request.daily ? '1' : '0',
+    });
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted && !_session.won) setState(() {});
     });
@@ -94,6 +105,55 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       );
     }
     if (mounted) setState(() {});
+  }
+
+  Future<void> _onCheck(List<String> names) async {
+    final verdict = _session.check(names);
+    final wasWon = _session.won;
+    setState(() => _needsHeart = verdict == HeartCheck.needsHeart);
+    if (verdict == HeartCheck.charged || verdict == HeartCheck.needsHeart) {
+      await _feedback(gentle: false);
+    }
+    if (wasWon) unawaited(_recordWin());
+  }
+
+  Future<void> _onHint(List<String> names) async {
+    if (hintAccess(widget.progress.data.hintBalance) == HintAccess.spendWallet) {
+      await widget.progress.update(widget.progress.data.spendHint());
+      setState(() => _session.showHint(names));
+      await widget.services.analytics.logEvent('hint_used', {'source': 'wallet'});
+      return;
+    }
+    setState(() => _needsAdHint = true);
+  }
+
+  Future<void> _watchHint(List<String> names) async {
+    final granted = await widget.services.ads.showRewarded(RewardReason.hint);
+    if (!granted || !mounted) return;
+    setState(() {
+      _needsAdHint = false;
+      _session.showHint(names);
+    });
+    await widget.services.analytics.logEvent('hint_used', {'source': 'rewarded'});
+  }
+
+  Future<void> _watchHeart() async {
+    final granted = await widget.services.ads.showRewarded(RewardReason.extraHeart);
+    if (!granted || !mounted) return;
+    setState(() {
+      _session.refillHeart();
+      _needsHeart = false;
+    });
+  }
+
+  Future<void> _feedback({required bool gentle}) async {
+    final data = widget.progress.data;
+    if (data.hapticsEnabled) {
+      await HapticFeedback.selectionClick();
+    }
+    if (data.soundEnabled && !gentle) {
+      await SystemSound.play(SystemSoundType.click);
+    }
   }
 
   void _mutate(void Function() change) {
@@ -143,6 +203,26 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                   ),
                 ],
               ),
+              if (!request.daily) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    for (var heart = 0; heart < StoreCatalog.heartsPerPuzzle; heart++)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: CustomPaint(
+                          size: const Size.square(18),
+                          painter: _HeartPainter(filled: heart < _session.hearts, color: palette.accent),
+                        ),
+                      ),
+                    const Spacer(),
+                    Text(
+                      '${widget.progress.data.hintBalance} hints',
+                      style: TextStyle(color: palette.muted, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 8),
               Expanded(
                 child: BoardView(
@@ -172,7 +252,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                     child: SoftButton(
                       key: const ValueKey('check-button'),
                       label: 'Check',
-                      onPressed: () => _mutate(() => _session.check(names)),
+                      onPressed: () => _onCheck(names),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -181,13 +261,31 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                       key: const ValueKey('hint-button'),
                       label: 'Hint',
                       primary: true,
-                      onPressed: () => _mutate(() => _session.showHint(names)),
+                      onPressed: () => _onHint(names),
                     ),
                   ),
                 ],
               ),
             ],
           ),
+          if (_needsHeart)
+            _sheet(
+              palette: palette,
+              eyebrow: 'Out of hearts',
+              body: 'A wrong check uses a heart. Watch a short ad to get one back, or undo and keep looking.',
+              action: 'Get a heart',
+              onAction: _watchHeart,
+              onClose: () => setState(() => _needsHeart = false),
+            ),
+          if (_needsAdHint)
+            _sheet(
+              palette: palette,
+              eyebrow: 'Hint',
+              body: 'The hint wallet is empty. A short ad unlocks this one. Buying hints in Settings skips the ad.',
+              action: 'Watch ad',
+              onAction: () => _watchHint(names),
+              onClose: () => setState(() => _needsAdHint = false),
+            ),
           if (_session.hintText != null)
             _sheet(
               palette: palette,
@@ -224,6 +322,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     required String eyebrow,
     required String body,
     required VoidCallback onClose,
+    String action = 'Got it',
+    VoidCallback? onAction,
   }) {
     return Positioned(
       left: 0,
@@ -251,7 +351,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 ),
               ),
               const SizedBox(height: 12),
-              SoftButton(label: 'Got it', onPressed: onClose, expand: false),
+              SoftButton(label: action, onPressed: onAction ?? onClose, expand: false),
+              if (onAction != null) ...[
+                const SizedBox(height: 8),
+                SoftButton(label: 'Not now', onPressed: onClose, expand: false),
+              ],
             ],
           ),
         ),
@@ -323,5 +427,30 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       ),
     );
   }
+}
 
+class _HeartPainter extends CustomPainter {
+  _HeartPainter({required this.filled, required this.color});
+
+  final bool filled;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = filled ? color : color.withValues(alpha: 0.25)
+      ..style = filled ? PaintingStyle.fill : PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    final path = Path()
+      ..moveTo(size.width * 0.5, size.height * 0.86)
+      ..cubicTo(size.width * 0.02, size.height * 0.48, size.width * 0.08, size.height * 0.08, size.width * 0.32, size.height * 0.18)
+      ..cubicTo(size.width * 0.42, size.height * 0.22, size.width * 0.48, size.height * 0.32, size.width * 0.5, size.height * 0.4)
+      ..cubicTo(size.width * 0.52, size.height * 0.32, size.width * 0.58, size.height * 0.22, size.width * 0.68, size.height * 0.18)
+      ..cubicTo(size.width * 0.92, size.height * 0.08, size.width * 0.98, size.height * 0.48, size.width * 0.5, size.height * 0.86)
+      ..close();
+    canvas.drawPath(path, paint);
   }
+
+  @override
+  bool shouldRepaint(covariant _HeartPainter oldDelegate) => oldDelegate.filled != filled || oldDelegate.color != color;
+}

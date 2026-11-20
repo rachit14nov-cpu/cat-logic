@@ -1,13 +1,15 @@
+import '../core/economy.dart';
+
 abstract class IapService {
   Future<void> init();
 
   Future<bool> purchase(String productId);
 
   Future<void> restore();
-}
 
-abstract final class IapProducts {
-  static const removeAds = 'remove_ads';
+  bool get storeAvailable;
+
+  String priceLabel(String productId);
 }
 
 class NoopIapService implements IapService {
@@ -19,4 +21,10 @@ class NoopIapService implements IapService {
 
   @override
   Future<void> restore() async {}
+
+  @override
+  bool get storeAvailable => false;
+
+  @override
+  String priceLabel(String productId) => StoreCatalog.find(productId)?.priceLabel ?? '';
 }

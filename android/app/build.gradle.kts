@@ -5,6 +5,8 @@ plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services") apply false
+    id("com.google.firebase.crashlytics") apply false
 }
 
 // The application id lives in one file so it can be renamed without hunting
@@ -73,10 +75,32 @@ android {
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        ndk {
+            // Phones are arm64. Dropping x86 and 32-bit keeps the store bundle small.
+            abiFilters += listOf("arm64-v8a")
+        }
+        manifestPlaceholders["admobAppId"] = "ca-app-pub-7274973557636419~7653220075"
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+        }
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
+            packaging {
+                jniLibs {
+                    excludes += setOf("**/x86/**", "**/x86_64/**", "**/armeabi-v7a/**")
+                }
+            }
             signingConfig =
                 if (hasReleaseKeystore) {
                     signingConfigs.getByName("release")
@@ -106,4 +130,9 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+if (file("google-services.json").exists()) {
+    pluginManager.apply("com.google.gms.google-services")
+    pluginManager.apply("com.google.firebase.crashlytics")
 }

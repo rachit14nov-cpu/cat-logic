@@ -2,9 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:cat_logic/core/catalog.dart';
-import 'package:cat_logic/core/daily.dart';
 import 'package:cat_logic/core/generator.dart';
+import 'package:cat_logic/core/level_pack.dart';
 import 'package:cat_logic/core/puzzle.dart';
 
 /// Deterministic seed for the bundled campaign and daily pool.
@@ -155,16 +154,11 @@ void main(List<String> args) {
   }
 
   final meta = _meta(levels);
-  final campaignFile = File('assets/levels/levels.json');
-  final dailyFile = File('assets/levels/daily.json');
-  campaignFile.parent.createSync(recursive: true);
+  final directory = Directory('assets/levels');
+  directory.createSync(recursive: true);
+  File('assets/levels/campaign.bin.gz').writeAsBytesSync(gzip.encode(LevelPack.encode(levels, daily: false)));
+  File('assets/levels/daily.bin.gz').writeAsBytesSync(gzip.encode(LevelPack.encode(daily, daily: true)));
   const encoder = JsonEncoder.withIndent('  ');
-  campaignFile.writeAsStringSync(
-    '${encoder.convert(campaignDocument(seed: packSeed, levels: levels, meta: meta))}\n',
-  );
-  dailyFile.writeAsStringSync(
-    '${encoder.convert(dailyDocument(seed: packSeed, epoch: isoDate(dailyEpoch), puzzles: daily))}\n',
-  );
   final elapsed = DateTime.now().difference(started);
   stdout.writeln('Wrote ${levels.length} campaign levels and ${daily.length} daily puzzles in ${elapsed.inSeconds}s.');
   stdout.writeln(encoder.convert(meta));

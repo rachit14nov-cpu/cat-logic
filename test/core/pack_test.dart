@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:cat_logic/core/catalog.dart';
@@ -10,15 +9,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('the bundled packs are large, unique, and solvable', () {
-    final campaignFile = File('assets/levels/levels.json');
-    final dailyFile = File('assets/levels/daily.json');
-    expect(campaignFile.existsSync(), isTrue);
-    final catalog = LevelCatalog.fromJson(campaignFile.readAsStringSync(), dailyFile.readAsStringSync());
+    final catalog = LevelCatalog.fromPacked(
+      gzip.decode(File('assets/levels/campaign.bin.gz').readAsBytesSync()),
+      gzip.decode(File('assets/levels/daily.bin.gz').readAsBytesSync()),
+    );
     expect(catalog.campaign.length, greaterThanOrEqualTo(500));
     expect(catalog.daily.length, greaterThanOrEqualTo(400));
 
-    final meta = jsonDecode(campaignFile.readAsStringSync()) as Map<String, dynamic>;
-    final counts = Map<String, dynamic>.from(meta['meta']['bySize'] as Map);
     final seen = <String>{};
     final bySize = <int, int>{};
     for (final level in catalog.campaign) {
@@ -29,7 +26,6 @@ void main() {
     }
     for (final size in [5, 6, 7, 8, 9, 10]) {
       expect(bySize[size], greaterThanOrEqualTo(60), reason: 'size $size');
-      expect(counts['$size'], bySize[size]);
     }
 
     final dailySeen = <String>{};

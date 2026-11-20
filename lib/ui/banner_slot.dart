@@ -2,7 +2,6 @@ import 'package:flutter/widgets.dart';
 
 import '../core/ad_pacing.dart';
 import '../services/app_services.dart';
-import 'chrome.dart';
 
 /// Collapses until a future ad SDK reports a filled banner.
 class BannerSlot extends StatelessWidget {
@@ -13,14 +12,14 @@ class BannerSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!services.ads.hasFilledBanner(surface)) return const SizedBox.shrink();
-    final palette = CatTheme.of(context).palette;
-    return SizedBox(
-      height: 52,
-      child: ColoredBox(
-        color: palette.card,
-        child: Center(child: Text('Banner', style: TextStyle(color: palette.muted))),
-      ),
-    );
+    final ads = services.ads;
+    if (ads is Listenable) {
+      final listenable = ads as Listenable;
+      return ListenableBuilder(
+        listenable: listenable,
+        builder: (context, _) => ads.bannerWidget(surface) ?? const SizedBox.shrink(),
+      );
+    }
+    return ads.bannerWidget(surface) ?? const SizedBox.shrink();
   }
 }

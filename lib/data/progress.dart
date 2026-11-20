@@ -1,4 +1,5 @@
 import '../core/daily.dart';
+import '../core/economy.dart';
 
 class ProgressData {
   const ProgressData({
@@ -11,6 +12,11 @@ class ProgressData {
     required this.dailyStreak,
     required this.lastDailyDate,
     required this.dailyBestMs,
+    required this.hintBalance,
+    required this.removeAds,
+    required this.starterBundleClaimed,
+    required this.soundEnabled,
+    required this.hapticsEnabled,
   });
 
   factory ProgressData.initial() {
@@ -24,6 +30,11 @@ class ProgressData {
       dailyStreak: 0,
       lastDailyDate: null,
       dailyBestMs: {},
+      hintBalance: StoreCatalog.startingHints,
+      removeAds: false,
+      starterBundleClaimed: false,
+      soundEnabled: true,
+      hapticsEnabled: true,
     );
   }
 
@@ -36,10 +47,17 @@ class ProgressData {
   final int dailyStreak;
   final String? lastDailyDate;
   final Map<String, int> dailyBestMs;
+  final int hintBalance;
+  final bool removeAds;
+  final bool starterBundleClaimed;
+  final bool soundEnabled;
+  final bool hapticsEnabled;
 
   DailyStreak get streak => DailyStreak(count: dailyStreak, lastCompleted: lastDailyDate);
 
   int visibleStreak(DateTime now) => streak.visibleOn(now);
+
+  Wallet get wallet => Wallet(hints: hintBalance, removeAds: removeAds, starterClaimed: starterBundleClaimed);
 
   ProgressData completeLevel(String id, int elapsedMs) {
     final best = Map<String, int>.from(bestMs);
@@ -62,6 +80,20 @@ class ProgressData {
     );
   }
 
+  ProgressData applyProduct(String productId, {required bool restore}) {
+    final next = wallet.apply(productId, restore: restore);
+    return copyWith(
+      hintBalance: next.hints,
+      removeAds: next.removeAds,
+      starterBundleClaimed: next.starterClaimed,
+    );
+  }
+
+  ProgressData spendHint() {
+    if (hintBalance <= 0) return this;
+    return copyWith(hintBalance: hintBalance - 1);
+  }
+
   ProgressData copyWith({
     Set<String>? completed,
     Map<String, int>? bestMs,
@@ -72,6 +104,11 @@ class ProgressData {
     int? dailyStreak,
     String? lastDailyDate,
     Map<String, int>? dailyBestMs,
+    int? hintBalance,
+    bool? removeAds,
+    bool? starterBundleClaimed,
+    bool? soundEnabled,
+    bool? hapticsEnabled,
     bool clearDailyDate = false,
   }) {
     return ProgressData(
@@ -84,6 +121,11 @@ class ProgressData {
       dailyStreak: dailyStreak ?? this.dailyStreak,
       lastDailyDate: clearDailyDate ? null : lastDailyDate ?? this.lastDailyDate,
       dailyBestMs: dailyBestMs ?? this.dailyBestMs,
+      hintBalance: hintBalance ?? this.hintBalance,
+      removeAds: removeAds ?? this.removeAds,
+      starterBundleClaimed: starterBundleClaimed ?? this.starterBundleClaimed,
+      soundEnabled: soundEnabled ?? this.soundEnabled,
+      hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
     );
   }
 
@@ -99,6 +141,11 @@ class ProgressData {
       'dailyStreak': dailyStreak,
       'lastDailyDate': lastDailyDate,
       'dailyBestMs': dailyBestMs,
+      'hintBalance': hintBalance,
+      'removeAds': removeAds,
+      'starterBundleClaimed': starterBundleClaimed,
+      'soundEnabled': soundEnabled,
+      'hapticsEnabled': hapticsEnabled,
     };
   }
 
@@ -128,6 +175,11 @@ class ProgressData {
       dailyStreak: (json['dailyStreak'] as num?)?.toInt() ?? 0,
       lastDailyDate: json['lastDailyDate'] as String?,
       dailyBestMs: times(json['dailyBestMs']),
+      hintBalance: (json['hintBalance'] as num?)?.toInt() ?? initial.hintBalance,
+      removeAds: json['removeAds'] as bool? ?? false,
+      starterBundleClaimed: json['starterBundleClaimed'] as bool? ?? false,
+      soundEnabled: json['soundEnabled'] as bool? ?? true,
+      hapticsEnabled: json['hapticsEnabled'] as bool? ?? true,
     );
   }
 }

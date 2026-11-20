@@ -28,6 +28,7 @@ class CatLogicApp extends StatelessWidget {
           color: const Color(0xFFC4623A),
           debugShowCheckedModeBanner: false,
           builder: (context, child) {
+            services.ads.setAdsRemoved(progress.data.removeAds);
             final platform = View.of(context).platformDispatcher.platformBrightness;
             final mode = progress.data.themeMode;
             final brightness = switch (mode) {
@@ -61,7 +62,7 @@ class CatLogicApp extends StatelessWidget {
     final page = switch (settings.name) {
       '/levels' => LevelSelectScreen(catalog: catalog, progress: progress.data, services: services),
       '/play' => _game(settings.arguments),
-      '/settings' => SettingsScreen(progress: progress),
+      '/settings' => SettingsScreen(progress: progress, services: services),
       '/howto' => const HowToPlayScreen(),
       _ => HomeScreen(catalog: catalog, progress: progress.data, services: services),
     };

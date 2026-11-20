@@ -1,15 +1,20 @@
 import '../core/deduction.dart';
+import '../core/economy.dart';
 import '../core/explain.dart';
 import '../core/puzzle.dart';
 import '../core/rules.dart';
 
 class PlaySession {
-  PlaySession({required this.puzzle, required this.autoMark}) : marks = List<CellMark>.filled(puzzle.cellCount, CellMark.empty) {
+  PlaySession({required this.puzzle, required this.autoMark, this.trackHearts = true, int? hearts})
+    : hearts = hearts ?? (trackHearts ? StoreCatalog.heartsPerPuzzle : 0),
+      marks = List<CellMark>.filled(puzzle.cellCount, CellMark.empty) {
     clock.start();
   }
 
   final Puzzle puzzle;
+  final bool trackHearts;
   bool autoMark;
+  int hearts;
   List<CellMark> marks;
   final List<List<CellMark>> history = [];
   final Stopwatch clock = Stopwatch();
@@ -67,6 +72,7 @@ class PlaySession {
     hintText = null;
     report = null;
     won = false;
+    if (trackHearts) hearts = StoreCatalog.heartsPerPuzzle;
     clock
       ..reset()
       ..start();
@@ -86,14 +92,34 @@ class PlaySession {
     hintText = null;
   }
 
-  void check(List<String> names) {
+  HeartCheck check(List<String> names) {
     hint = null;
     hintText = null;
-    report = assessCats(puzzle, _cats(), names);
-    if (report!.won) {
-      won = true;
-      clock.stop();
+    final assessment = assessCats(puzzle, _cats(), names);
+    final verdict = judgeCheck(
+      trackHearts: trackHearts,
+      hearts: hearts,
+      won: assessment.won,
+      mistake: assessment.issues.isNotEmpty,
+    );
+    switch (verdict) {
+      case HeartCheck.won:
+        report = assessment;
+        won = true;
+        clock.stop();
+      case HeartCheck.free:
+        report = assessment;
+      case HeartCheck.charged:
+        hearts -= 1;
+        report = assessment;
+      case HeartCheck.needsHeart:
+        report = null;
     }
+    return verdict;
+  }
+
+  void refillHeart() {
+    hearts = refillHeartCount(hearts);
   }
 
   void _remember() {

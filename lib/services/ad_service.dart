@@ -1,11 +1,20 @@
+import 'package:flutter/widgets.dart';
+
 import '../core/ad_pacing.dart';
-import '../core/daily.dart';
 
 abstract class AdService {
   Future<void> init();
 
   /// True only when a banner creative is actually ready. Menus reserve no gap until then.
   bool hasFilledBanner(AdSurface surface);
+
+  Widget? bannerWidget(AdSurface surface);
+
+  void setAdsRemoved(bool removed);
+
+  bool get privacyOptionsRequired;
+
+  Future<void> showPrivacyOptions();
 
   Future<bool> maybeShowInterstitial({
     required int completedLevelNumber,
@@ -20,18 +29,25 @@ class NoopAdService implements AdService {
   NoopAdService(this.pacing);
 
   final AdPacing pacing;
-  DateTime? _lastInterstitial;
-  int _shownToday = 0;
-  String? _shownDay;
+  bool adsRemoved = false;
 
   @override
   Future<void> init() async {}
 
   @override
-  bool hasFilledBanner(AdSurface surface) {
-    final allowed = pacing.allowBanner(surface);
-    return allowed && false;
-  }
+  bool hasFilledBanner(AdSurface surface) => false;
+
+  @override
+  Widget? bannerWidget(AdSurface surface) => null;
+
+  @override
+  void setAdsRemoved(bool removed) => adsRemoved = removed;
+
+  @override
+  bool get privacyOptionsRequired => false;
+
+  @override
+  Future<void> showPrivacyOptions() async {}
 
   @override
   Future<bool> maybeShowInterstitial({
@@ -39,28 +55,20 @@ class NoopAdService implements AdService {
     required bool midPuzzle,
     required DateTime now,
   }) async {
-    final day = isoDate(now);
-    if (_shownDay != day) {
-      _shownDay = day;
-      _shownToday = 0;
-    }
-    final allowed = pacing.allowInterstitial(
+    if (adsRemoved || midPuzzle) return false;
+    return pacing.allowInterstitial(
       completedLevelNumber: completedLevelNumber,
       midPuzzle: midPuzzle,
       now: now,
-      lastInterstitialAt: _lastInterstitial,
-      interstitialsToday: _shownToday,
-    );
-    if (allowed) {
-      // The future ad SDK presents one interstitial here, then records the time.
-    }
-    return false;
+      lastInterstitialAt: null,
+      interstitialsToday: 0,
+    ) &&
+        false;
   }
 
   @override
   Future<bool> showRewarded(RewardReason reason) async {
     if (!pacing.allowRewarded(reason)) return false;
-    // The future SDK would grant a hint, an extra heart, or a second daily attempt.
     return false;
   }
 }

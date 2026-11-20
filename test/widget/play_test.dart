@@ -64,16 +64,10 @@ void main() {
     final store = MemoryProgressStore();
     final progress = ProgressController(
       store,
-      const ProgressData(
-        completed: {},
-        bestMs: {},
-        autoMark: true,
-        paletteId: 'meadow',
+      ProgressData.initial().copyWith(
         themeMode: 'light',
-        patternsAlways: false,
         dailyStreak: 4,
         lastDailyDate: '2026-11-19',
-        dailyBestMs: {},
       ),
     );
     await tester.pumpWidget(

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:cat_logic/app.dart';
 import 'package:cat_logic/core/ad_pacing.dart';
@@ -28,9 +27,9 @@ void main() {
       loader.addFont(Future<ByteData>.value(ByteData.sublistView(Uint8List.fromList(bytes))));
     }
     await loader.load();
-    final catalog = LevelCatalog.fromJson(
-      File('assets/levels/levels.json').readAsStringSync(),
-      File('assets/levels/daily.json').readAsStringSync(),
+    final catalog = LevelCatalog.fromPacked(
+      gzip.decode(File('assets/levels/campaign.bin.gz').readAsBytesSync()),
+      gzip.decode(File('assets/levels/daily.bin.gz').readAsBytesSync()),
     );
     final completed = {for (final level in catalog.campaign.take(3)) level.id};
     final services = AppServices.noop(DefaultRemoteConfig());

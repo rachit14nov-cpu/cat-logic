@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../core/ad_pacing.dart';
 import '../../core/catalog.dart';
+import '../../core/daily.dart';
 import '../../data/progress.dart';
 import '../../services/app_services.dart';
 import '../banner_slot.dart';
@@ -47,11 +48,17 @@ class HomeScreen extends StatelessWidget {
           SoftButton(
             key: const ValueKey('daily-button'),
             label: dailyLine,
-            onPressed: () {
-              final today = catalog.dailyFor(DateTime.now());
+            onPressed: () async {
+              final now = DateTime.now();
+              final replay = progress.lastDailyDate == isoDate(now);
+              if (replay) {
+                final allowed = await services.ads.showRewarded(RewardReason.secondDailyAttempt);
+                if (!allowed || !context.mounted) return;
+              }
+              if (!context.mounted) return;
               Navigator.of(context).pushNamed(
                 '/play',
-                arguments: PlayRequest(level: today, number: 0, daily: true),
+                arguments: PlayRequest(level: catalog.dailyFor(now), number: 0, daily: true),
               );
             },
           ),

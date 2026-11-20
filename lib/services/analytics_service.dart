@@ -3,6 +3,10 @@ abstract class AnalyticsService {
 }
 
 class NoopAnalyticsService implements AnalyticsService {
+  final List<String> events = [];
+
   @override
-  Future<void> logEvent(String name, [Map<String, Object>? params]) async {}
+  Future<void> logEvent(String name, [Map<String, Object>? params]) async {
+    events.add(name);
+  }
 }

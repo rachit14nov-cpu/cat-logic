@@ -1,6 +1,30 @@
 import '../core/daily.dart';
 import '../core/economy.dart';
 
+/// A campaign board left mid-puzzle. Undo history is not stored.
+class BoardResume {
+  const BoardResume({required this.levelId, required this.marks, required this.elapsedMs, required this.hearts});
+
+  final String levelId;
+  final List<int> marks;
+  final int elapsedMs;
+  final int hearts;
+
+  Map<String, Object?> toJson() => {'levelId': levelId, 'marks': marks, 'elapsedMs': elapsedMs, 'hearts': hearts};
+
+  static BoardResume? fromJson(Object? value) {
+    if (value is! Map) return null;
+    final rawMarks = value['marks'];
+    if (rawMarks is! List || value['levelId'] == null) return null;
+    return BoardResume(
+      levelId: value['levelId'].toString(),
+      marks: [for (final mark in rawMarks) if (mark is num) mark.toInt()],
+      elapsedMs: (value['elapsedMs'] as num?)?.toInt() ?? 0,
+      hearts: (value['hearts'] as num?)?.toInt() ?? StoreCatalog.heartsPerPuzzle,
+    );
+  }
+}
+
 class ProgressData {
   const ProgressData({
     required this.completed,
@@ -17,6 +41,8 @@ class ProgressData {
     required this.starterBundleClaimed,
     required this.soundEnabled,
     required this.hapticsEnabled,
+    required this.tutorialSeen,
+    required this.resume,
   });
 
   factory ProgressData.initial() {
@@ -35,6 +61,8 @@ class ProgressData {
       starterBundleClaimed: false,
       soundEnabled: true,
       hapticsEnabled: true,
+      tutorialSeen: false,
+      resume: null,
     );
   }
 
@@ -52,6 +80,8 @@ class ProgressData {
   final bool starterBundleClaimed;
   final bool soundEnabled;
   final bool hapticsEnabled;
+  final bool tutorialSeen;
+  final BoardResume? resume;
 
   DailyStreak get streak => DailyStreak(count: dailyStreak, lastCompleted: lastDailyDate);
 
@@ -109,7 +139,10 @@ class ProgressData {
     bool? starterBundleClaimed,
     bool? soundEnabled,
     bool? hapticsEnabled,
+    bool? tutorialSeen,
+    BoardResume? resume,
     bool clearDailyDate = false,
+    bool clearResume = false,
   }) {
     return ProgressData(
       completed: completed ?? this.completed,
@@ -126,6 +159,8 @@ class ProgressData {
       starterBundleClaimed: starterBundleClaimed ?? this.starterBundleClaimed,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
+      tutorialSeen: tutorialSeen ?? this.tutorialSeen,
+      resume: clearResume ? null : resume ?? this.resume,
     );
   }
 
@@ -146,6 +181,8 @@ class ProgressData {
       'starterBundleClaimed': starterBundleClaimed,
       'soundEnabled': soundEnabled,
       'hapticsEnabled': hapticsEnabled,
+      'tutorialSeen': tutorialSeen,
+      'resume': resume?.toJson(),
     };
   }
 
@@ -180,6 +217,8 @@ class ProgressData {
       starterBundleClaimed: json['starterBundleClaimed'] as bool? ?? false,
       soundEnabled: json['soundEnabled'] as bool? ?? true,
       hapticsEnabled: json['hapticsEnabled'] as bool? ?? true,
+      tutorialSeen: json['tutorialSeen'] as bool? ?? false,
+      resume: BoardResume.fromJson(json['resume']),
     );
   }
 }

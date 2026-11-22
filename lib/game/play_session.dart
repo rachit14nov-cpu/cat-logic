@@ -5,9 +5,15 @@ import '../core/puzzle.dart';
 import '../core/rules.dart';
 
 class PlaySession {
-  PlaySession({required this.puzzle, required this.autoMark, this.trackHearts = true, int? hearts})
-    : hearts = hearts ?? (trackHearts ? StoreCatalog.heartsPerPuzzle : 0),
-      marks = List<CellMark>.filled(puzzle.cellCount, CellMark.empty) {
+  PlaySession({
+    required this.puzzle,
+    required this.autoMark,
+    this.trackHearts = true,
+    int? hearts,
+    List<CellMark>? restored,
+    this.carriedMs = 0,
+  }) : hearts = hearts ?? (trackHearts ? StoreCatalog.heartsPerPuzzle : 0),
+       marks = restored ?? List<CellMark>.filled(puzzle.cellCount, CellMark.empty) {
     clock.start();
   }
 
@@ -18,6 +24,11 @@ class PlaySession {
   List<CellMark> marks;
   final List<List<CellMark>> history = [];
   final Stopwatch clock = Stopwatch();
+  final int carriedMs;
+
+  int get elapsedMilliseconds => carriedMs + clock.elapsedMilliseconds;
+
+  Duration get elapsed => Duration(milliseconds: elapsedMilliseconds);
   bool won = false;
   LogicStep? hint;
   String? hintText;

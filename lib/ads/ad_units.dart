@@ -23,5 +23,7 @@ abstract final class AdUnits {
 }
 
 abstract final class LegalLinks {
-  static const privacyPolicy = 'https://tinybitlabs.example/cat-logic/privacy';
+  static const privacyPolicy = 'https://tinybitlabs.co/cat-logic/privacy';
+  static const dataDeletion = 'https://tinybitlabs.co/cat-logic/delete-data';
+  static const supportEmail = 'support@tinybitlabs.co';
 }

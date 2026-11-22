@@ -29,7 +29,7 @@ void main() {
         3, 3, 4, 4, 4,
       ],
     );
-    final progress = ProgressController(MemoryProgressStore(), ProgressData.initial());
+    final progress = ProgressController(MemoryProgressStore(), ProgressData.initial().copyWith(tutorialSeen: true));
     await tester.pumpWidget(
       _host(
         GameScreen(
@@ -89,6 +89,35 @@ void main() {
     await progress.update(progress.data.completeDaily(DateTime(2026, 11, 20), 12000));
     expect(progress.data.dailyStreak, 5);
     expect(progress.data.lastDailyDate, '2026-11-20');
+  });
+
+  testWidgets('the first puzzle teaches the moves once', (tester) async {
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final level = Level(id: '5-001', size: 5, difficulty: Difficulty.gentle, regions: List<int>.generate(25, (index) => index % 5));
+    final progress = ProgressController(MemoryProgressStore(), ProgressData.initial());
+    await tester.pumpWidget(
+      _host(
+        GameScreen(
+          request: PlayRequest(level: level, number: 1, daily: false),
+          progress: progress,
+          services: AppServices.noop(DefaultRemoteConfig()),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.byKey(const ValueKey('tutorial-card')), findsOneWidget);
+    expect(find.text('Place a cat'), findsOneWidget);
+    await tester.tap(find.text('Next'));
+    await tester.pump();
+    await tester.tap(find.text('Next'));
+    await tester.pump();
+    await tester.tap(find.text('Start'));
+    await tester.pump();
+    expect(progress.data.tutorialSeen, isTrue);
+    expect(find.byKey(const ValueKey('tutorial-card')), findsNothing);
   });
 }
 

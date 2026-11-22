@@ -38,15 +38,18 @@ enum RewardReason { hint, extraHeart, secondDailyAttempt }
 /// Pacing for ads that are not wired up yet.
 ///
 /// Defaults, all overridable through [RemoteConfig]:
-/// * no interstitial on levels 1–8, and never mid-puzzle
-/// * then one after every 2nd completed level (10, 12, 14, …)
+/// * no ads of any kind during campaign puzzles 1–8
+/// * no interstitial mid-puzzle; after that, one between every 2nd finished puzzle (10, 12, …)
 /// * at most one interstitial per 90 seconds, and about 20 per day
-/// * rewarded placements: hint, extra heart, second daily attempt
-/// * banners only on the menu and the level select
+/// * rewarded hints and hearts are opt-in, and only after puzzle 8
+/// * a second daily attempt can still ask for an opt-in reward
+/// * banners only on the menu and the level select, and only after 8 campaign puzzles
 class AdPacing {
   AdPacing(this.remote);
 
   final RemoteConfig remote;
+
+  static const openingLevels = 8;
 
   static const minLevelKey = 'ads.interstitial.minLevel';
   static const everyKey = 'ads.interstitial.everyCompleted';
@@ -76,12 +79,16 @@ class AdPacing {
     return true;
   }
 
-  bool allowBanner(AdSurface surface) {
+  bool allowBanner(AdSurface surface, {int completedCampaignLevels = openingLevels}) {
+    if (completedCampaignLevels < openingLevels) return false;
     final raw = remote.string(bannerKey, fallback: 'menu,levelSelect');
     return raw.split(',').contains(surface.name);
   }
 
-  bool allowRewarded(RewardReason reason) {
+  bool allowRewarded(RewardReason reason, {int? campaignLevel}) {
+    if (campaignLevel != null && campaignLevel <= openingLevels && reason != RewardReason.secondDailyAttempt) {
+      return false;
+    }
     final raw = remote.string(rewardedKey, fallback: 'hint,extraHeart,secondDailyAttempt');
     return raw.split(',').contains(reason.name);
   }

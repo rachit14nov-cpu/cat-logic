@@ -39,6 +39,17 @@ void main() {
     expect(shouldShowForcedAd(removeAds: false, pacingAllows: false), isFalse);
   });
 
+  test('a mid-puzzle board survives a save and a reload', () {
+    final resume = BoardResume(levelId: '5-001', marks: const [4, 0, 1], elapsedMs: 12000, hearts: 2);
+    final saved = ProgressData.initial().copyWith(resume: resume, tutorialSeen: true);
+    final loaded = ProgressData.fromJson(saved.toJson());
+    expect(loaded.tutorialSeen, isTrue);
+    expect(loaded.resume?.levelId, '5-001');
+    expect(loaded.resume?.marks, [4, 0, 1]);
+    expect(loaded.resume?.hearts, 2);
+    expect(loaded.copyWith(clearResume: true).resume, isNull);
+  });
+
   test('cloud merge keeps purchases, the larger wallet, and every finish', () {
     final local = ProgressData.initial().copyWith(completed: {'5-001'}, hintBalance: 1, removeAds: true);
     final cloud = ProgressData.initial().copyWith(

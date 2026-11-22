@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../../core/ad_pacing.dart';
 import '../../core/catalog.dart';
 import '../../core/daily.dart';
+import '../../core/puzzle.dart';
 import '../../data/progress.dart';
 import '../../services/app_services.dart';
 import '../banner_slot.dart';
@@ -21,6 +22,11 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = CatTheme.of(context).palette;
     final streak = progress.visibleStreak(DateTime.now());
+    final saved = progress.resume;
+    final resumeIndex = saved == null ? -1 : catalog.indexOf(saved.levelId);
+    final Level? resumeLevel = saved != null && resumeIndex >= 0 && !progress.completed.contains(saved.levelId)
+        ? catalog.campaign[resumeIndex]
+        : null;
     final dailyLine = streak == 0 ? "Today's puzzle" : (streak == 1 ? "Today's puzzle · 1-day streak" : "Today's puzzle · $streak-day streak");
     return CatPage(
       child: Column(
@@ -38,10 +44,22 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 6),
           Text('A calm star-battle by Tinybit Labs.', style: TextStyle(color: palette.muted, fontSize: 14)),
           const Spacer(),
+          if (resumeLevel != null) ...[
+            SoftButton(
+              key: const ValueKey('continue-button'),
+              label: 'Continue puzzle ${resumeIndex + 1}',
+              primary: true,
+              onPressed: () => Navigator.of(context).pushNamed(
+                '/play',
+                arguments: PlayRequest(level: resumeLevel, number: resumeIndex + 1, daily: false),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
           SoftButton(
             key: const ValueKey('play-button'),
-            label: 'Play',
-            primary: true,
+            label: resumeLevel == null ? 'Play' : 'Puzzle list',
+            primary: resumeLevel == null,
             onPressed: () => Navigator.of(context).pushNamed('/levels'),
           ),
           const SizedBox(height: 10),

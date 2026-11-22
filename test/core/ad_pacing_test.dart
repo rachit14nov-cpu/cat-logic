@@ -40,5 +40,11 @@ void main() {
     expect(pacing.allowRewarded(RewardReason.hint), isTrue);
     expect(pacing.allowRewarded(RewardReason.extraHeart), isTrue);
     expect(pacing.allowRewarded(RewardReason.secondDailyAttempt), isTrue);
+    expect(pacing.allowBanner(AdSurface.menu, completedCampaignLevels: 7), isFalse);
+    expect(pacing.allowBanner(AdSurface.menu, completedCampaignLevels: 8), isTrue);
+    expect(pacing.allowRewarded(RewardReason.hint, campaignLevel: 3), isFalse);
+    expect(pacing.allowRewarded(RewardReason.extraHeart, campaignLevel: 8), isFalse);
+    expect(pacing.allowRewarded(RewardReason.hint, campaignLevel: 9), isTrue);
+    expect(pacing.allowRewarded(RewardReason.secondDailyAttempt, campaignLevel: 1), isTrue);
   });
 }

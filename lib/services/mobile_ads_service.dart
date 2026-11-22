@@ -18,6 +18,7 @@ class MobileAdsService extends ChangeNotifier implements AdService {
 
   bool _ready = false;
   bool _adsRemoved = false;
+  int _campaignCompleted = 0;
   bool _privacyOptions = false;
   InterstitialAd? _interstitial;
   RewardedAd? _rewarded;
@@ -47,8 +48,25 @@ class MobileAdsService extends ChangeNotifier implements AdService {
   }
 
   @override
+  void setCampaignCompleted(int count) {
+    if (_campaignCompleted == count) return;
+    _campaignCompleted = count;
+    _maybeLoadBanners();
+    notifyListeners();
+  }
+
+  @override
   Future<void> init() async {
-    await MobileAds.instance.updateRequestConfiguration(RequestConfiguration(maxAdContentRating: MaxAdContentRating.g));
+    await MobileAds.instance.updateRequestConfiguration(
+      RequestConfiguration(
+        maxAdContentRating: MaxAdContentRating.pg,
+        // The newer age signal only offers child or teen. `no` is the explicit not-child-directed mark.
+        // ignore: deprecated_member_use
+        tagForChildDirectedTreatment: TagForChildDirectedTreatment.no,
+        // ignore: deprecated_member_use
+        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.no,
+      ),
+    );
     final updated = Completer<void>();
     ConsentInformation.instance.requestConsentInfoUpdate(
       ConsentRequestParameters(),
@@ -66,12 +84,7 @@ class MobileAdsService extends ChangeNotifier implements AdService {
     _ready = await ConsentInformation.instance.canRequestAds();
     if (!_ready) return;
     await MobileAds.instance.initialize();
-    _loadInterstitial();
-    _loadRewarded();
-    if (!_adsRemoved) {
-      _loadBanner(AdSurface.menu);
-      _loadBanner(AdSurface.levelSelect);
-    }
+    _maybeLoadBanners();
     notifyListeners();
   }
 
@@ -83,8 +96,7 @@ class MobileAdsService extends ChangeNotifier implements AdService {
     });
     await done.future;
     _ready = await ConsentInformation.instance.canRequestAds();
-    if (_ready && _interstitial == null) _loadInterstitial();
-    if (_ready && _rewarded == null) _loadRewarded();
+    _maybeLoadBanners();
     notifyListeners();
   }
 
@@ -93,7 +105,9 @@ class MobileAdsService extends ChangeNotifier implements AdService {
 
   @override
   Widget? bannerWidget(AdSurface surface) {
-    if (!_ready || _adsRemoved || !pacing.allowBanner(surface)) return null;
+    if (!_ready || _adsRemoved || !pacing.allowBanner(surface, completedCampaignLevels: _campaignCompleted)) {
+      return null;
+    }
     final banner = _banners[surface];
     if (banner == null || !_bannerReady.contains(surface)) return null;
     return SizedBox(width: banner.size.width.toDouble(), height: banner.size.height.toDouble(), child: AdWidget(ad: banner));
@@ -150,8 +164,8 @@ class MobileAdsService extends ChangeNotifier implements AdService {
   }
 
   @override
-  Future<bool> showRewarded(RewardReason reason) async {
-    if (!_ready || !pacing.allowRewarded(reason)) return false;
+  Future<bool> showRewarded(RewardReason reason, {int? campaignLevel}) async {
+    if (!_ready || !pacing.allowRewarded(reason, campaignLevel: campaignLevel)) return false;
     final ad = _rewarded;
     if (ad == null) {
       _loadRewarded();
@@ -183,6 +197,12 @@ class MobileAdsService extends ChangeNotifier implements AdService {
       },
     );
     return earned.future;
+  }
+
+  void _maybeLoadBanners() {
+    if (!_ready || _adsRemoved || _campaignCompleted < AdPacing.openingLevels) return;
+    if (!_banners.containsKey(AdSurface.menu)) _loadBanner(AdSurface.menu);
+    if (!_banners.containsKey(AdSurface.levelSelect)) _loadBanner(AdSurface.levelSelect);
   }
 
   void _loadInterstitial() {

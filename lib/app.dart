@@ -29,6 +29,7 @@ class CatLogicApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           builder: (context, child) {
             services.ads.setAdsRemoved(progress.data.removeAds);
+            services.ads.setCampaignCompleted(progress.data.completed.length);
             final platform = View.of(context).platformDispatcher.platformBrightness;
             final mode = progress.data.themeMode;
             final brightness = switch (mode) {

@@ -12,6 +12,9 @@ abstract class AdService {
 
   void setAdsRemoved(bool removed);
 
+  /// Finished campaign puzzles. Banners and forced breaks stay off until this reaches 8.
+  void setCampaignCompleted(int count);
+
   bool get privacyOptionsRequired;
 
   Future<void> showPrivacyOptions();
@@ -22,7 +25,7 @@ abstract class AdService {
     required DateTime now,
   });
 
-  Future<bool> showRewarded(RewardReason reason);
+  Future<bool> showRewarded(RewardReason reason, {int? campaignLevel});
 }
 
 class NoopAdService implements AdService {
@@ -30,9 +33,13 @@ class NoopAdService implements AdService {
 
   final AdPacing pacing;
   bool adsRemoved = false;
+  int campaignCompleted = AdPacing.openingLevels;
 
   @override
   Future<void> init() async {}
+
+  @override
+  void setCampaignCompleted(int count) => campaignCompleted = count;
 
   @override
   bool hasFilledBanner(AdSurface surface) => false;
@@ -67,8 +74,8 @@ class NoopAdService implements AdService {
   }
 
   @override
-  Future<bool> showRewarded(RewardReason reason) async {
-    if (!pacing.allowRewarded(reason)) return false;
+  Future<bool> showRewarded(RewardReason reason, {int? campaignLevel}) async {
+    if (!pacing.allowRewarded(reason, campaignLevel: campaignLevel)) return false;
     return false;
   }
 }

@@ -42,7 +42,7 @@ dart run tool/generate_levels.dart
 
 ## Play
 
-Story puzzles start with 3 hearts and a wallet of 3 hints. A check that finds a broken placement spends one heart. An unfinished board does not. A rewarded ad gives one heart back, up to 3. Hints spend the wallet first, then offer an optional ad. Daily puzzles do not use hearts. The first play of a day is free; playing again that day asks for a rewarded ad. A hint never changes the streak.
+Story puzzles start with 3 hearts and a wallet of 3 hints. The first one opens with a short tutorial. Leaving a puzzle saves the board. A check that finds a broken placement spends one heart. An unfinished board does not. A rewarded ad gives one heart back, up to 3. Hints spend the wallet first, then offer an optional ad. Daily puzzles do not use hearts. The first play of a day is free; playing again that day asks for a rewarded ad. A hint never changes the streak.
 
 Remove-ads turns off banners and interstitial breaks. Rewarded ads stay optional.
 
@@ -94,7 +94,9 @@ Analytics then records `level_start`, `level_complete`, `hint_used`, `daily_comp
 | `ads.banner.surfaces` | `menu,levelSelect` |
 | `ads.rewarded` | `hint,extraHeart,secondDailyAttempt` |
 
-Until a fetch succeeds, those defaults are used. Ad requests are capped at content rating G. The UMP consent form runs before any ad load. Settings has Privacy options for that form, and a privacy policy link (`LegalLinks.privacyPolicy`, currently a placeholder).
+Until a fetch succeeds, those defaults are used. Every ad request is marked not child-directed (`tagForChildDirectedTreatment` and `tagForUnderAgeOfConsent` are false), with a max content rating of PG for a 13+ audience. Compile SDK and target SDK are 36. The UMP consent form runs before any ad load. Banners, interstitials, and rewarded hints stay off through campaign puzzle 8. After that, banners are only on the menu and level select, and an interstitial can appear between puzzles (after 10, 12, 14, and so on), never during one. Rewarded hints stay optional. Settings links the privacy policy, the data-deletion page, and support@tinybitlabs.co.
+
+The first story puzzle shows a three-step tutorial once. Leaving a campaign puzzle saves the board, the clock, and the hearts, and Home offers Continue. Target API is 36, which is what Play requires for phone and tablet submissions after the 1 November 2026 extension.
 
 ## Play Console products
 

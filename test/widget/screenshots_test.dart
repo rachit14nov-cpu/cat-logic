@@ -48,7 +48,7 @@ void main() {
       await expectLater(find.byKey(const ValueKey('shot-root')).last, matchesGoldenFile('../../screenshots/$name.png'));
     }
 
-    final light = ProgressData.initial().copyWith(themeMode: 'light', completed: completed);
+    final light = ProgressData.initial().copyWith(themeMode: 'light', completed: completed, tutorialSeen: true);
     final dark = light.copyWith(themeMode: 'dark');
     final beacon = light.copyWith(paletteId: 'beacon', patternsAlways: true);
 

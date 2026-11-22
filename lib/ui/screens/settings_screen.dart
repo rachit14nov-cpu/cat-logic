@@ -108,6 +108,16 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SoftButton(
+            label: 'Delete my data',
+            onPressed: () => launchUrl(Uri.parse(LegalLinks.dataDeletion), mode: LaunchMode.externalApplication),
+          ),
+          const SizedBox(height: 8),
+          SoftButton(
+            label: 'Email support',
+            onPressed: () => launchUrl(Uri.parse('mailto:${LegalLinks.supportEmail}'), mode: LaunchMode.externalApplication),
+          ),
+          const SizedBox(height: 8),
+          SoftButton(
             label: 'Privacy options',
             onPressed: () async {
               if (!services.ads.privacyOptionsRequired) {
@@ -118,8 +128,9 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
           const SizedBox(height: 24),
-          Text('Cat Logic', style: TextStyle(color: palette.ink, fontWeight: FontWeight.w700, fontSize: 16)),
+          Text('About', style: TextStyle(color: palette.ink, fontWeight: FontWeight.w700, fontSize: 16)),
           Text('Cat Logic: Star Battle Puzzle', style: TextStyle(color: palette.muted)),
+          Text(LegalLinks.supportEmail, style: TextStyle(color: palette.muted, fontSize: 13)),
           const SizedBox(height: 4),
           Text('Tinybit Labs', style: TextStyle(color: palette.ink, fontWeight: FontWeight.w600)),
           FutureBuilder<String>(

@@ -26,5 +26,6 @@ ProgressData mergeProgress(ProgressData local, ProgressData? cloud) {
     starterBundleClaimed: local.starterBundleClaimed || cloud.starterBundleClaimed,
     dailyStreak: useCloudStreak ? cloud.dailyStreak : local.dailyStreak,
     lastDailyDate: useCloudStreak ? cloudDay : localDay,
+    tutorialSeen: local.tutorialSeen || cloud.tutorialSeen,
   );
 }

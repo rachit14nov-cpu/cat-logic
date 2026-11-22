@@ -30,6 +30,68 @@ void paintCat(Canvas canvas, Rect rect, Color coat, Color ink) {
   canvas.drawPath(nose, feature);
 }
 
+/// A whole-body sleeping cat on a cushion. Used for the store icon and feature art.
+void paintCurledCat(Canvas canvas, Rect rect, {required Color coat, required Color ink, required Color cushion}) {
+  final pad = Paint()..color = cushion;
+  final body = Paint()..color = coat;
+  final line = Paint()
+    ..color = ink
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = rect.width * 0.035
+    ..strokeCap = StrokeCap.round;
+  final cushionRect = Rect.fromCenter(
+    center: rect.center.translate(0, rect.height * 0.22),
+    width: rect.width * 0.78,
+    height: rect.height * 0.28,
+  );
+  canvas.drawRRect(RRect.fromRectAndRadius(cushionRect, Radius.circular(rect.width * 0.14)), pad);
+  canvas.drawOval(
+    Rect.fromCenter(center: rect.center.translate(-rect.width * 0.02, rect.height * 0.04), width: rect.width * 0.62, height: rect.height * 0.4),
+    body,
+  );
+  final head = rect.center.translate(rect.width * 0.16, -rect.height * 0.08);
+  canvas.drawCircle(head, rect.width * 0.2, body);
+  final ear = Path()
+    ..moveTo(head.dx - rect.width * 0.12, head.dy - rect.width * 0.08)
+    ..lineTo(head.dx - rect.width * 0.16, head.dy - rect.width * 0.28)
+    ..lineTo(head.dx - rect.width * 0.01, head.dy - rect.width * 0.14)
+    ..moveTo(head.dx + rect.width * 0.04, head.dy - rect.width * 0.16)
+    ..lineTo(head.dx + rect.width * 0.1, head.dy - rect.width * 0.32)
+    ..lineTo(head.dx + rect.width * 0.18, head.dy - rect.width * 0.1);
+  canvas.drawPath(ear, body);
+  canvas.drawArc(
+    Rect.fromCircle(center: rect.center.translate(-rect.width * 0.22, rect.height * 0.02), radius: rect.width * 0.16),
+    1.2,
+    2.4,
+    false,
+    Paint()
+      ..color = coat
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = rect.width * 0.09
+      ..strokeCap = StrokeCap.round,
+  );
+  final eye = Paint()
+    ..color = ink
+    ..strokeWidth = rect.width * 0.028
+    ..strokeCap = StrokeCap.round
+    ..style = PaintingStyle.stroke;
+  canvas.drawArc(Rect.fromCenter(center: head.translate(-rect.width * 0.07, rect.width * 0.02), width: rect.width * 0.08, height: rect.width * 0.05), 0.2, 2.6, false, eye);
+  canvas.drawArc(Rect.fromCenter(center: head.translate(rect.width * 0.07, rect.width * 0.02), width: rect.width * 0.08, height: rect.width * 0.05), 0.3, 2.6, false, eye);
+  canvas.drawCircle(head.translate(0, rect.width * 0.08), rect.width * 0.018, Paint()..color = ink);
+  canvas.drawPath(ear, line);
+}
+
+void paintSparkle(Canvas canvas, Offset center, double radius, Color color) {
+  final paint = Paint()
+    ..color = color
+    ..strokeWidth = radius * 0.22
+    ..strokeCap = StrokeCap.round;
+  canvas.drawLine(center.translate(0, -radius), center.translate(0, radius), paint);
+  canvas.drawLine(center.translate(-radius, 0), center.translate(radius, 0), paint);
+  canvas.drawLine(center.translate(-radius * 0.55, -radius * 0.55), center.translate(radius * 0.55, radius * 0.55), paint);
+  canvas.drawLine(center.translate(radius * 0.55, -radius * 0.55), center.translate(-radius * 0.55, radius * 0.55), paint);
+}
+
 void paintMark(Canvas canvas, Rect rect, Color color, {bool soft = false}) {
   final inset = rect.deflate(rect.width * 0.30);
   final paint = Paint()

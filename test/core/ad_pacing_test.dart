@@ -45,6 +45,7 @@ void main() {
     expect(pacing.allowRewarded(RewardReason.hint, campaignLevel: 3), isFalse);
     expect(pacing.allowRewarded(RewardReason.extraHeart, campaignLevel: 8), isFalse);
     expect(pacing.allowRewarded(RewardReason.hint, campaignLevel: 9), isTrue);
-    expect(pacing.allowRewarded(RewardReason.secondDailyAttempt, campaignLevel: 1), isTrue);
+    expect(pacing.allowRewarded(RewardReason.secondDailyAttempt, completedCampaignLevels: 7), isFalse);
+    expect(pacing.allowRewarded(RewardReason.secondDailyAttempt, completedCampaignLevels: 8), isTrue);
   });
 }

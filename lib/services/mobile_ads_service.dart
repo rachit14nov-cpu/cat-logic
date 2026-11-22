@@ -165,7 +165,14 @@ class MobileAdsService extends ChangeNotifier implements AdService {
 
   @override
   Future<bool> showRewarded(RewardReason reason, {int? campaignLevel}) async {
-    if (!_ready || !pacing.allowRewarded(reason, campaignLevel: campaignLevel)) return false;
+    if (!_ready ||
+        !pacing.allowRewarded(
+          reason,
+          campaignLevel: campaignLevel,
+          completedCampaignLevels: _campaignCompleted,
+        )) {
+      return false;
+    }
     final ad = _rewarded;
     if (ad == null) {
       _loadRewarded();

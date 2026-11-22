@@ -54,6 +54,7 @@ def cat(size, paper=(246, 241, 232, 255), ink=(62, 52, 44, 255)):
 
 
 def main():
+    raise SystemExit('Launcher art is drawn by test/store/capture_store_test.dart. Run: flutter test test/store/capture_store_test.dart')
     root = Path(__file__).resolve().parents[1]
     android = {
         48: root / "android/app/src/main/res/mipmap-mdpi/ic_launcher.png",

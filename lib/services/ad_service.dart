@@ -75,7 +75,9 @@ class NoopAdService implements AdService {
 
   @override
   Future<bool> showRewarded(RewardReason reason, {int? campaignLevel}) async {
-    if (!pacing.allowRewarded(reason, campaignLevel: campaignLevel)) return false;
+    if (!pacing.allowRewarded(reason, campaignLevel: campaignLevel, completedCampaignLevels: campaignCompleted)) {
+      return false;
+    }
     return false;
   }
 }

@@ -69,7 +69,8 @@ class HomeScreen extends StatelessWidget {
             onPressed: () async {
               final now = DateTime.now();
               final replay = progress.lastDailyDate == isoDate(now);
-              if (replay) {
+              final adsOpen = progress.completed.length >= AdPacing.openingLevels;
+              if (replay && adsOpen) {
                 final allowed = await services.ads.showRewarded(RewardReason.secondDailyAttempt);
                 if (!allowed || !context.mounted) return;
               }

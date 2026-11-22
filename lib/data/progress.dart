@@ -50,7 +50,7 @@ class ProgressData {
       completed: {},
       bestMs: {},
       autoMark: true,
-      paletteId: 'meadow',
+      paletteId: 'standard',
       themeMode: 'system',
       patternsAlways: false,
       dailyStreak: 0,

@@ -229,7 +229,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     final request = widget.request;
     final title = request.daily ? "Today's puzzle" : 'Puzzle ${request.number}';
     final focus = _session.hint?.focusCells.toSet() ?? <int>{};
-    final emphasis = <int>{...?_session.hint?.resultCells, for (final issue in _session.report?.issues ?? const []) ...issue.cells};
+    final dim = _session.hint?.resultCells.toSet() ?? <int>{};
+    final emphasis = <int>{for (final issue in _session.report?.issues ?? const []) ...issue.cells};
+    final streak = request.daily ? widget.progress.data.visibleStreak(DateTime.now()) : 0;
     return CatPage(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       child: Stack(
@@ -262,6 +264,19 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                   ),
                 ],
               ),
+              if (request.daily) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    CustomPaint(size: const Size.square(18), painter: _FlamePainter(color: palette.accent)),
+                    const SizedBox(width: 8),
+                    Text(
+                      streak == 1 ? '1-day streak' : '$streak-day streak',
+                      style: TextStyle(color: palette.ink, fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ],
               if (!request.daily) ...[
                 const SizedBox(height: 8),
                 Row(
@@ -291,6 +306,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                   patterns: theme.patterns,
                   focus: focus,
                   emphasis: emphasis,
+                  dim: dim,
                   onTap: (index) => _mutate(() => _session.tap(index)),
                   onDoubleTap: (index) {
                     final before = _session.marks[index];
@@ -554,6 +570,27 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       ),
     );
   }
+}
+
+class _FlamePainter extends CustomPainter {
+  _FlamePainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    final path = Path()
+      ..moveTo(size.width * 0.5, size.height * 0.05)
+      ..quadraticBezierTo(size.width * 0.95, size.height * 0.45, size.width * 0.72, size.height * 0.78)
+      ..quadraticBezierTo(size.width * 0.5, size.height * 1.05, size.width * 0.28, size.height * 0.78)
+      ..quadraticBezierTo(size.width * 0.05, size.height * 0.45, size.width * 0.5, size.height * 0.05)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _FlamePainter oldDelegate) => oldDelegate.color != color;
 }
 
 class _HeartPainter extends CustomPainter {

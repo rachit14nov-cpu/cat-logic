@@ -5,40 +5,13 @@ import 'package:flutter/widgets.dart';
 import 'palettes.dart';
 
 void paintCat(Canvas canvas, Rect rect, Color coat, Color ink) {
-  final center = rect.center;
-  final unit = rect.width * 0.22;
-  final ears = Path()
-    ..moveTo(center.dx - unit * 0.85, center.dy - unit * 0.2)
-    ..lineTo(center.dx - unit * 0.48, center.dy - unit * 1.35)
-    ..lineTo(center.dx - unit * 0.05, center.dy - unit * 0.28)
-    ..moveTo(center.dx + unit * 0.85, center.dy - unit * 0.2)
-    ..lineTo(center.dx + unit * 0.48, center.dy - unit * 1.35)
-    ..lineTo(center.dx + unit * 0.05, center.dy - unit * 0.28);
-  final fill = Paint()
-    ..color = coat
-    ..style = PaintingStyle.fill;
-  canvas.drawPath(ears, fill);
-  canvas.drawCircle(center.translate(0, unit * 0.18), unit * 0.92, fill);
-  final feature = Paint()..color = ink;
-  canvas.drawCircle(center.translate(-unit * 0.32, unit * 0.05), unit * 0.12, feature);
-  canvas.drawCircle(center.translate(unit * 0.32, unit * 0.05), unit * 0.12, feature);
-  final nose = Path()
-    ..moveTo(center.dx, center.dy + unit * 0.28)
-    ..lineTo(center.dx - unit * 0.12, center.dy + unit * 0.46)
-    ..lineTo(center.dx + unit * 0.12, center.dy + unit * 0.46)
-    ..close();
-  canvas.drawPath(nose, feature);
+  paintCurledCat(canvas, rect, coat: coat, ink: ink, cushion: Color.lerp(coat, const Color(0xFFF6F1E8), 0.62)!);
 }
 
 /// A whole-body sleeping cat on a cushion. Used for the store icon and feature art.
 void paintCurledCat(Canvas canvas, Rect rect, {required Color coat, required Color ink, required Color cushion}) {
   final pad = Paint()..color = cushion;
   final body = Paint()..color = coat;
-  final line = Paint()
-    ..color = ink
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = rect.width * 0.035
-    ..strokeCap = StrokeCap.round;
   final cushionRect = Rect.fromCenter(
     center: rect.center.translate(0, rect.height * 0.22),
     width: rect.width * 0.78,
@@ -52,12 +25,14 @@ void paintCurledCat(Canvas canvas, Rect rect, {required Color coat, required Col
   final head = rect.center.translate(rect.width * 0.16, -rect.height * 0.08);
   canvas.drawCircle(head, rect.width * 0.2, body);
   final ear = Path()
-    ..moveTo(head.dx - rect.width * 0.12, head.dy - rect.width * 0.08)
-    ..lineTo(head.dx - rect.width * 0.16, head.dy - rect.width * 0.28)
-    ..lineTo(head.dx - rect.width * 0.01, head.dy - rect.width * 0.14)
-    ..moveTo(head.dx + rect.width * 0.04, head.dy - rect.width * 0.16)
-    ..lineTo(head.dx + rect.width * 0.1, head.dy - rect.width * 0.32)
-    ..lineTo(head.dx + rect.width * 0.18, head.dy - rect.width * 0.1);
+    ..moveTo(head.dx - rect.width * 0.14, head.dy - rect.width * 0.02)
+    ..lineTo(head.dx - rect.width * 0.18, head.dy - rect.width * 0.32)
+    ..lineTo(head.dx - rect.width * 0.01, head.dy - rect.width * 0.1)
+    ..close()
+    ..moveTo(head.dx + rect.width * 0.02, head.dy - rect.width * 0.12)
+    ..lineTo(head.dx + rect.width * 0.08, head.dy - rect.width * 0.36)
+    ..lineTo(head.dx + rect.width * 0.2, head.dy - rect.width * 0.04)
+    ..close();
   canvas.drawPath(ear, body);
   canvas.drawArc(
     Rect.fromCircle(center: rect.center.translate(-rect.width * 0.22, rect.height * 0.02), radius: rect.width * 0.16),
@@ -78,8 +53,7 @@ void paintCurledCat(Canvas canvas, Rect rect, {required Color coat, required Col
   canvas.drawArc(Rect.fromCenter(center: head.translate(-rect.width * 0.07, rect.width * 0.02), width: rect.width * 0.08, height: rect.width * 0.05), 0.2, 2.6, false, eye);
   canvas.drawArc(Rect.fromCenter(center: head.translate(rect.width * 0.07, rect.width * 0.02), width: rect.width * 0.08, height: rect.width * 0.05), 0.3, 2.6, false, eye);
   canvas.drawCircle(head.translate(0, rect.width * 0.08), rect.width * 0.018, Paint()..color = ink);
-  canvas.drawPath(ear, line);
-}
+  }
 
 void paintSparkle(Canvas canvas, Offset center, double radius, Color color) {
   final paint = Paint()

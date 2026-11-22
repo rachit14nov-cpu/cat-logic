@@ -22,7 +22,7 @@ void main() {
     expect(step.resultCells, containsAll([3 * 5 + 2, 4 * 5 + 2]));
     expect(
       explainStep(step, names),
-      "The orange region only fits in column 3, so the other cells in column 3 can't hold a cat.",
+      "Orange fits only in column 3, so no other cell in column 3 can hold a cat.",
     );
     expect(explainStep(step, names), isNot(contains('Place a cat')));
   });

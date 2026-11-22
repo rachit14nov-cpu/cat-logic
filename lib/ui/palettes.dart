@@ -50,14 +50,16 @@ class PaletteFamily {
 
 class CatPalettes {
   static const families = [
-    PaletteFamily(id: 'meadow', label: 'Meadow', colorBlindSafe: false),
-    PaletteFamily(id: 'tidepool', label: 'Tidepool', colorBlindSafe: false),
-    PaletteFamily(id: 'beacon', label: 'Beacon', colorBlindSafe: true),
-    PaletteFamily(id: 'linen', label: 'Linen', colorBlindSafe: true),
+    PaletteFamily(id: 'standard', label: 'Standard', colorBlindSafe: false),
+    PaletteFamily(id: 'colorblind', label: 'Color-blind', colorBlindSafe: true),
   ];
 
   static CatPalette resolve(String id, Brightness brightness) {
-    return _all['$id-${brightness.name}'] ?? _all['meadow-${brightness.name}']!;
+    final mapped = switch (id) {
+      'colorblind' || 'beacon' || 'linen' => 'colorblind',
+      _ => 'standard',
+    };
+    return _all['$mapped-${brightness.name}']!;
   }
 
   static final Map<String, CatPalette> _all = {
@@ -101,53 +103,29 @@ List<CatPalette> _build() {
     );
   }
 
-  const meadow = [
-    ('orange', 0xFFF0A05A),
-    ('sage', 0xFF8FB58A),
-    ('sky', 0xFF8EB7D6),
-    ('lilac', 0xFFC7B0D6),
-    ('butter', 0xFFE6D48A),
-    ('rose', 0xFFE7A8B5),
-    ('mint', 0xFF9FCFC3),
-    ('pebble', 0xFFD2C0AE),
-    ('coral', 0xFFE39284),
-    ('mist', 0xFFA9B4C9),
+  const standard = [
+    ('terracotta', 0xFFC4623A),
+    ('denim', 0xFF6E8CA8),
+    ('ochre', 0xFFC6A15A),
+    ('teal', 0xFF3E8C84),
+    ('sage', 0xFF7FA37A),
+    ('sand', 0xFFD7C09A),
+    ('clay', 0xFFA86A45),
+    ('slate', 0xFF5E7388),
+    ('olive', 0xFF8A8F4E),
+    ('cocoa', 0xFF8C6850),
   ];
-  const meadowDark = [
-    ('orange', 0xFFE39A55),
-    ('sage', 0xFF7EAA78),
-    ('sky', 0xFF7EABC9),
-    ('lilac', 0xFFB9A0CC),
-    ('butter', 0xFFD4C27A),
-    ('rose', 0xFFD996A6),
-    ('mint', 0xFF8FC0B4),
-    ('pebble', 0xFFC2B09E),
-    ('coral', 0xFFD48476),
-    ('mist', 0xFF98A4BA),
-  ];
-  const tide = [
-    ('foam', 0xFFF2E3C6),
-    ('kelp', 0xFF6E9A86),
-    ('lagoon', 0xFF6AA8B5),
-    ('sand', 0xFFE2C39A),
-    ('shell', 0xFFE7B7A4),
-    ('cove', 0xFF5E7C91),
-    ('blossom', 0xFFC98B8B),
-    ('glass', 0xFFA9CBB7),
-    ('drift', 0xFFC4B49A),
-    ('slate', 0xFF7E8C9A),
-  ];
-  const tideDark = [
-    ('foam', 0xFFE6D2AE),
-    ('kelp', 0xFF7FB39A),
-    ('lagoon', 0xFF7EC0CC),
-    ('sand', 0xFFD4B48A),
-    ('shell', 0xFFE0A896),
-    ('cove', 0xFF8AA6B8),
-    ('blossom', 0xFFD7A0A0),
-    ('glass', 0xFFB7D6C6),
-    ('drift', 0xFFD2C2A8),
-    ('slate', 0xFFAEBBC6),
+  const standardDark = [
+    ('terracotta', 0xFFD47852),
+    ('denim', 0xFF8EACC4),
+    ('ochre', 0xFFD4B56E),
+    ('teal', 0xFF5EAAA2),
+    ('sage', 0xFF97B892),
+    ('sand', 0xFFE2CBA8),
+    ('clay', 0xFFC4845C),
+    ('slate', 0xFF7E94A8),
+    ('olive', 0xFFA8AD6A),
+    ('cocoa', 0xFFB08870),
   ];
   const beacon = [
     ('ink', 0xFF222222),
@@ -173,35 +151,10 @@ List<CatPalette> _build() {
     ('gray', 0xFFB0B0B0),
     ('umber', 0xFFE0C36A),
   ];
-  const linen = [
-    ('navy', 0xFF1F4E79),
-    ('orange', 0xFFE67E22),
-    ('black', 0xFF1A1A1A),
-    ('yellow', 0xFFF4D35E),
-    ('cyan', 0xFF2EC4B6),
-    ('red', 0xFFC44536),
-    ('teal', 0xFF1B7F7A),
-    ('magenta', 0xFFB84A86),
-    ('olive', 0xFF6B8F3C),
-    ('brown', 0xFF8D6A4A),
-  ];
-  const linenDark = [
-    ('navy', 0xFF8FB4D6),
-    ('orange', 0xFFF0A15A),
-    ('black', 0xFFF2F2F2),
-    ('yellow', 0xFFF6E28A),
-    ('cyan', 0xFF7FE0D6),
-    ('red', 0xFFE07A6E),
-    ('teal', 0xFF6FCFC6),
-    ('magenta', 0xFFE39BC4),
-    ('olive', 0xFFB7D48A),
-    ('brown', 0xFFD2B497),
-  ];
-
   return [
     pack(
-      id: 'meadow',
-      label: 'Meadow',
+      id: 'standard',
+      label: 'Standard',
       safe: false,
       dark: false,
       paper: 0xFFF6F1E8,
@@ -210,50 +163,24 @@ List<CatPalette> _build() {
       muted: 0xFF7A6E63,
       accent: 0xFFC4623A,
       line: 0xFFE4D8C8,
-      colors: meadow,
+      colors: standard,
     ),
     pack(
-      id: 'meadow',
-      label: 'Meadow',
+      id: 'standard',
+      label: 'Standard',
       safe: false,
       dark: true,
       paper: 0xFF1C1916,
       card: 0xFF2A241F,
       ink: 0xFFF4EDE4,
       muted: 0xFFB7AA9E,
-      accent: 0xFFF0A57A,
+      accent: 0xFFE08A62,
       line: 0xFF3A332C,
-      colors: meadowDark,
+      colors: standardDark,
     ),
     pack(
-      id: 'tidepool',
-      label: 'Tidepool',
-      safe: false,
-      dark: false,
-      paper: 0xFFF3F6F4,
-      card: 0xFFFBFFFC,
-      ink: 0xFF24312E,
-      muted: 0xFF5E736C,
-      accent: 0xFF3E7C78,
-      line: 0xFFD5E2DC,
-      colors: tide,
-    ),
-    pack(
-      id: 'tidepool',
-      label: 'Tidepool',
-      safe: false,
-      dark: true,
-      paper: 0xFF14201E,
-      card: 0xFF1E2C29,
-      ink: 0xFFE7F3EF,
-      muted: 0xFFA9C2BA,
-      accent: 0xFF8FD0C6,
-      line: 0xFF2C403C,
-      colors: tideDark,
-    ),
-    pack(
-      id: 'beacon',
-      label: 'Beacon',
+      id: 'colorblind',
+      label: 'Color-blind',
       safe: true,
       dark: false,
       paper: 0xFFF7F5F2,
@@ -265,8 +192,8 @@ List<CatPalette> _build() {
       colors: beacon,
     ),
     pack(
-      id: 'beacon',
-      label: 'Beacon',
+      id: 'colorblind',
+      label: 'Color-blind',
       safe: true,
       dark: true,
       paper: 0xFF121212,
@@ -276,32 +203,6 @@ List<CatPalette> _build() {
       accent: 0xFF7EC8F0,
       line: 0xFF333333,
       colors: beaconDark,
-    ),
-    pack(
-      id: 'linen',
-      label: 'Linen',
-      safe: true,
-      dark: false,
-      paper: 0xFFFBF7F0,
-      card: 0xFFFFFFFF,
-      ink: 0xFF1C1C1C,
-      muted: 0xFF4E4A45,
-      accent: 0xFF1F4E79,
-      line: 0xFFE6DDD0,
-      colors: linen,
-    ),
-    pack(
-      id: 'linen',
-      label: 'Linen',
-      safe: true,
-      dark: true,
-      paper: 0xFF161411,
-      card: 0xFF241F1A,
-      ink: 0xFFF7F1E8,
-      muted: 0xFFD0C6BA,
-      accent: 0xFFF0A15A,
-      line: 0xFF3A332C,
-      colors: linenDark,
     ),
   ];
 }

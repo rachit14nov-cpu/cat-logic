@@ -38,6 +38,7 @@ class BoardView extends StatelessWidget {
     required this.onDoubleTap,
     this.focus = const {},
     this.emphasis = const {},
+    this.dim = const {},
     super.key,
   });
 
@@ -49,6 +50,7 @@ class BoardView extends StatelessWidget {
   final void Function(int index) onDoubleTap;
   final Set<int> focus;
   final Set<int> emphasis;
+  final Set<int> dim;
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +72,7 @@ class BoardView extends StatelessWidget {
                     patterns: patterns,
                     focus: focus,
                     emphasis: emphasis,
+                    dim: dim,
                     metrics: metrics,
                   ),
                 ),
@@ -117,6 +120,7 @@ class _BoardPainter extends CustomPainter {
     required this.patterns,
     required this.focus,
     required this.emphasis,
+    required this.dim,
     required this.metrics,
   });
 
@@ -126,6 +130,7 @@ class _BoardPainter extends CustomPainter {
   final bool patterns;
   final Set<int> focus;
   final Set<int> emphasis;
+  final Set<int> dim;
   final BoardMetrics metrics;
 
   @override
@@ -154,19 +159,21 @@ class _BoardPainter extends CustomPainter {
         canvas.restore();
       }
       final light = look.color.computeLuminance() > 0.62;
-      final markColor = light ? palette.ink : const Color(0xFFF8F4EE);
+      final markColor = palette.colorBlindSafe ? const Color(0xFFF4F1EA) : palette.ink;
       final catCoat = light ? palette.ink : const Color(0xFFF8F4EE);
       final catInk = light ? palette.paper : palette.ink;
       switch (marks[index]) {
         case CellMark.cat:
-          paintCat(canvas, rect.deflate(rect.width * 0.12), catCoat, catInk);
+          paintCat(canvas, rect.deflate(rect.width * 0.08), catCoat, catInk);
         case CellMark.playerX:
-          paintMark(canvas, rect, markColor);
         case CellMark.autoX:
-          paintMark(canvas, rect, markColor, soft: true);
+          paintMark(canvas, rect, markColor);
         case CellMark.empty:
         case CellMark.keepOpen:
           break;
+      }
+      if (dim.contains(index)) {
+        canvas.drawRRect(rrect, Paint()..color = palette.paper.withValues(alpha: 0.62));
       }
       if (focus.contains(index)) {
         canvas.drawRRect(
@@ -202,6 +209,7 @@ class _BoardPainter extends CustomPainter {
     return oldDelegate.marks != marks ||
         oldDelegate.focus != focus ||
         oldDelegate.emphasis != emphasis ||
+        oldDelegate.dim != dim ||
         oldDelegate.palette != palette ||
         oldDelegate.patterns != patterns;
   }

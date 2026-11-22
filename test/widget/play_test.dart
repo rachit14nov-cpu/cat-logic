@@ -44,7 +44,7 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey('hint-sheet')), findsOneWidget);
     expect(
-      find.text("The orange region only fits in column 3, so the other cells in column 3 can't hold a cat."),
+      find.text("Terracotta fits only in column 3, so no other cell in column 3 can hold a cat."),
       findsOneWidget,
     );
     expect(find.textContaining('Place a cat at'), findsNothing);

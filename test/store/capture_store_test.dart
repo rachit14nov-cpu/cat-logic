@@ -93,7 +93,15 @@ Widget phone({required String caption, String? sub, required Widget scene}) {
   );
 }
 
-Widget board(Puzzle puzzle, List<CellMark> marks, {Set<int> focus = const {}, Set<int> emphasis = const {}, bool patterns = false, CatPalette? palette}) {
+Widget board(
+  Puzzle puzzle,
+  List<CellMark> marks, {
+  Set<int> focus = const {},
+  Set<int> emphasis = const {},
+  Set<int> dim = const {},
+  bool patterns = false,
+  CatPalette? palette,
+}) {
   final theme = palette ?? meadow;
   return CatTheme(
     palette: theme,
@@ -105,6 +113,7 @@ Widget board(Puzzle puzzle, List<CellMark> marks, {Set<int> focus = const {}, Se
       patterns: patterns || theme.colorBlindSafe,
       focus: focus,
       emphasis: emphasis,
+      dim: dim,
       onTap: (_) {},
       onDoubleTap: (_) {},
     ),
@@ -157,8 +166,8 @@ void main() {
         caption: 'Fair ads. Never mid-puzzle.',
         scene: Stack(
           children: [
-            Padding(padding: const EdgeInsets.fromLTRB(48, 12, 48, 48), child: board(seven, sevenMarks)),
-            Positioned(right: 72, bottom: 72, child: _Badge(text: 'No ads during play', palette: meadow)),
+            Padding(padding: const EdgeInsets.fromLTRB(60, 0, 60, 96), child: board(seven, sevenMarks)),
+            Positioned(right: 60, bottom: 96, child: _Badge(text: 'No ads mid-puzzle', palette: meadow)),
           ],
         ),
       ),
@@ -168,9 +177,6 @@ void main() {
 
   testWidgets('02 one cat per row', (tester) async {
     final row = {for (var column = 0; column < 5; column++) column};
-    final column = {for (var rowIndex = 0; rowIndex < 5; rowIndex++) rowIndex * 5 + 2};
-    final regionId = five.regions[0];
-    final region = {for (var index = 0; index < five.cellCount; index++) if (five.regions[index] == regionId) index};
     await capture(
       tester,
       const Size(1080, 1920),
@@ -178,8 +184,13 @@ void main() {
         caption: 'One cat per row',
         scene: Stack(
           children: [
-            Padding(padding: const EdgeInsets.fromLTRB(72, 24, 72, 160), child: board(five, placedOne(five), emphasis: row, focus: {...column, ...region})),
-            Positioned(left: 72, right: 72, bottom: 48, child: _Badge(text: 'No touching, even diagonally', palette: meadow)),
+            Padding(padding: const EdgeInsets.fromLTRB(60, 0, 60, 160), child: board(five, placedOne(five), emphasis: row)),
+            Positioned(
+              left: 60,
+              right: 60,
+              bottom: 96,
+              child: _Badge(text: 'Also one per column and region. No touching, even diagonally.', palette: meadow),
+            ),
           ],
         ),
       ),
@@ -194,9 +205,19 @@ void main() {
       phone(
         caption: 'Pure logic, no guessing',
         sub: 'Every puzzle has one solution',
-        scene: Padding(
-          padding: const EdgeInsets.fromLTRB(48, 12, 48, 48),
-          child: board(seven, List<CellMark>.filled(seven.cellCount, CellMark.empty), focus: step.focusCells.toSet(), emphasis: step.resultCells.toSet()),
+        scene: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(60, 0, 60, 180),
+              child: board(seven, _catIn(seven, step.focusCells.isEmpty ? step.resultCells : step.focusCells)),
+            ),
+            const Positioned(
+              left: 60,
+              right: 60,
+              bottom: 96,
+              child: _Callout(text: 'Only one cell, so the cat goes here'),
+            ),
+          ],
         ),
       ),
       'store/phone/03-pure-logic.png',
@@ -204,6 +225,14 @@ void main() {
   });
 
   testWidgets('04 hints', (tester) async {
+    final puzzle = Puzzle(5, const [
+      1, 1, 0, 2, 2, //
+      1, 1, 0, 2, 2, //
+      1, 3, 0, 2, 2, //
+      3, 3, 3, 4, 4, //
+      3, 3, 4, 4, 4,
+    ]);
+    final hint = LogicState(puzzle).next(allowContradiction: false)!;
     await capture(
       tester,
       const Size(1080, 1920),
@@ -213,17 +242,29 @@ void main() {
           children: [
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(48, 8, 48, 8),
-                child: board(seven, List<CellMark>.filled(seven.cellCount, CellMark.empty), focus: step.focusCells.toSet(), emphasis: step.resultCells.toSet()),
+                padding: const EdgeInsets.fromLTRB(60, 0, 60, 12),
+                child: board(
+                  puzzle,
+                  List<CellMark>.filled(puzzle.cellCount, CellMark.empty),
+                  focus: hint.focusCells.toSet(),
+                  dim: hint.resultCells.toSet(),
+                ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(36, 0, 36, 36),
+              padding: const EdgeInsets.fromLTRB(60, 0, 60, 96),
               child: DecoratedBox(
                 decoration: BoxDecoration(color: meadow.card, borderRadius: BorderRadius.circular(28), border: Border.all(color: meadow.line)),
                 child: Padding(
                   padding: const EdgeInsets.all(28),
-                  child: Text(explainStep(step, regionNames), style: TextStyle(fontFamily: 'Inter', fontSize: 32, height: 1.3, color: meadow.ink)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Hint', style: TextStyle(fontFamily: 'Inter', color: meadow.accent, fontWeight: FontWeight.w700, fontSize: 22)),
+                      const SizedBox(height: 8),
+                      Text(explainStep(hint, regionNames), style: TextStyle(fontFamily: 'Inter', fontSize: 32, height: 1.3, color: meadow.ink)),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -241,10 +282,14 @@ void main() {
       phone(
         caption: 'A new puzzle daily',
         scene: Padding(
-          padding: const EdgeInsets.fromLTRB(48, 8, 48, 36),
+          padding: const EdgeInsets.fromLTRB(60, 0, 60, 96),
           child: Column(
             children: [
+              const Text("Today's puzzle", style: TextStyle(fontFamily: 'Inter', fontSize: 36, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
               _CalendarStrip(palette: meadow),
+              const SizedBox(height: 12),
+              const _StreakLine(),
               const SizedBox(height: 16),
               Expanded(child: board(daily, dailyMarks)),
             ],
@@ -261,25 +306,25 @@ void main() {
       const Size(1080, 1920),
       phone(
         caption: '500+ puzzles, 5x5 to 10x10',
-        scene: Stack(
-          alignment: Alignment.center,
-          children: [
-            _LevelFanBackground(palette: meadow),
-            Padding(
-              padding: const EdgeInsets.only(top: 220),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  SizedBox(width: 240, height: 240, child: board(five, fiveMarks)),
-                  const SizedBox(width: 18),
-                  SizedBox(width: 300, height: 300, child: board(seven, sevenMarks)),
-                  const SizedBox(width: 18),
-                  SizedBox(width: 360, height: 360, child: board(ten, tenMarks)),
-                ],
+        scene: Padding(
+          padding: const EdgeInsets.fromLTRB(60, 0, 60, 96),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Transform.translate(
+                offset: const Offset(-180, 40),
+                child: Transform.rotate(angle: -0.16, child: SizedBox(width: 640, height: 640, child: board(five, fiveMarks))),
               ),
-            ),
-          ],
+              Transform.translate(
+                offset: const Offset(20, -20),
+                child: Transform.rotate(angle: 0.02, child: SizedBox(width: 720, height: 720, child: board(seven, sevenMarks))),
+              ),
+              Transform.translate(
+                offset: const Offset(200, 30),
+                child: Transform.rotate(angle: 0.14, child: SizedBox(width: 820, height: 820, child: board(ten, tenMarks))),
+              ),
+            ],
+          ),
         ),
       ),
       'store/phone/06-sizes.png',
@@ -291,14 +336,14 @@ void main() {
       tester,
       const Size(1080, 1920),
       phone(
-        caption: 'Color-blind friendly modes',
+        caption: 'Color-blind friendly mode',
         scene: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 12, 28, 36),
+          padding: const EdgeInsets.fromLTRB(60, 0, 60, 96),
           child: Row(
             children: [
-              Expanded(child: _LabeledBoard(label: 'Meadow', child: board(five, fiveMarks))),
-              const SizedBox(width: 16),
-              Expanded(child: _LabeledBoard(label: 'Beacon', child: board(five, fiveMarks, patterns: true, palette: beacon))),
+              Expanded(child: _LabeledBoard(label: 'Standard', child: board(five, fiveMarks))),
+              const SizedBox(width: 24),
+              Expanded(child: _LabeledBoard(label: 'Color-blind', child: board(five, fiveMarks, patterns: true, palette: beacon))),
             ],
           ),
         ),
@@ -312,29 +357,17 @@ void main() {
       tester,
       const Size(1080, 1920),
       phone(
-        caption: 'Offline play, cloud save',
-        scene: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(width: 460, height: 460, child: CustomPaint(painter: _IconPainter())),
-            const SizedBox(height: 28),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _Badge(text: 'Offline', palette: meadow),
-                const SizedBox(width: 16),
-                _Badge(text: 'Play Games', palette: meadow),
-              ],
-            ),
-            const SizedBox(height: 28),
-            DecoratedBox(
-              decoration: BoxDecoration(color: meadow.ink, borderRadius: BorderRadius.circular(18)),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                child: Text('Progress synced', style: TextStyle(fontFamily: 'Inter', fontSize: 32, fontWeight: FontWeight.w600, color: meadow.paper)),
-              ),
-            ),
-          ],
+        caption: 'Play offline, anywhere',
+        scene: const Padding(
+          padding: EdgeInsets.fromLTRB(60, 0, 60, 96),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(width: 680, height: 680, child: CustomPaint(painter: _IconPainter())),
+              SizedBox(height: 28),
+              _OfflineChip(),
+            ],
+          ),
         ),
       ),
       'store/phone/08-offline.png',
@@ -372,11 +405,89 @@ void main() {
   }
 }
 
+List<CellMark> _catIn(Puzzle puzzle, List<int> cells) {
+  final marks = List<CellMark>.filled(puzzle.cellCount, CellMark.empty);
+  if (cells.isNotEmpty) marks[cells.first] = CellMark.cat;
+  return withAutoMarks(puzzle, marks, enabled: true);
+}
+
 List<CellMark> placedOne(Puzzle puzzle) {
   final cats = Solver.solutions(puzzle, limit: 1).single;
   final marks = List<CellMark>.filled(puzzle.cellCount, CellMark.empty);
   marks[cats[0]] = CellMark.cat;
   return withAutoMarks(puzzle, marks, enabled: true);
+}
+
+class _Callout extends StatelessWidget {
+  const _Callout({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(color: const Color(0xFF3E342C), borderRadius: BorderRadius.circular(18)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+        child: Text(text, textAlign: TextAlign.center, style: const TextStyle(fontFamily: 'Inter', fontSize: 28, fontWeight: FontWeight.w700, color: Color(0xFFF6F1E8))),
+      ),
+    );
+  }
+}
+
+class _StreakLine extends StatelessWidget {
+  const _StreakLine();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        CustomPaint(size: Size.square(28), painter: _FlamePainter(color: Color(0xFFC4623A))),
+        SizedBox(width: 10),
+        Text('3-day streak', style: TextStyle(fontFamily: 'Inter', fontSize: 32, fontWeight: FontWeight.w700, color: Color(0xFF3E342C))),
+      ],
+    );
+  }
+}
+
+class _OfflineChip extends StatelessWidget {
+  const _OfflineChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBF5),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE4D8C8), width: 2),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+        child: Text('Offline', style: TextStyle(fontFamily: 'Inter', fontSize: 28, fontWeight: FontWeight.w700, color: Color(0xFF3E342C))),
+      ),
+    );
+  }
+}
+
+class _FlamePainter extends CustomPainter {
+  const _FlamePainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(size.width * 0.5, 0)
+      ..quadraticBezierTo(size.width, size.height * 0.45, size.width * 0.72, size.height * 0.78)
+      ..quadraticBezierTo(size.width * 0.5, size.height, size.width * 0.28, size.height * 0.78)
+      ..quadraticBezierTo(0, size.height * 0.45, size.width * 0.5, 0)
+      ..close();
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(covariant _FlamePainter oldDelegate) => oldDelegate.color != color;
 }
 
 class _Badge extends StatelessWidget {
@@ -433,51 +544,7 @@ class _CalendarStrip extends StatelessWidget {
               ),
             ),
           ),
-        const SizedBox(width: 8),
-        Text('3', style: TextStyle(fontFamily: 'Inter', fontSize: 36, fontWeight: FontWeight.w700, color: palette.accent)),
-      ],
-    );
-  }
-}
-
-class _LevelFanBackground extends StatelessWidget {
-  const _LevelFanBackground({required this.palette});
-
-  final CatPalette palette;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Puzzles', style: TextStyle(fontFamily: 'Inter', fontSize: 36, fontWeight: FontWeight.w700, color: palette.ink)),
-          Text('5 × 5', style: TextStyle(fontFamily: 'Inter', fontSize: 24, fontWeight: FontWeight.w700, color: palette.muted)),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              for (var number = 1; number <= 18; number++)
-                Container(
-                  width: 72,
-                  height: 72,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: number < 8 ? palette.accent : palette.card,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: palette.line),
-                  ),
-                  child: Text(
-                    '$number',
-                    style: TextStyle(fontFamily: 'Inter', fontSize: 22, fontWeight: FontWeight.w700, color: number < 8 ? palette.card : palette.ink),
-                  ),
-                ),
-            ],
-          ),
         ],
-      ),
     );
   }
 }
@@ -513,13 +580,13 @@ class _FeatureGraphic extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-            right: 70,
-            top: 70,
+            left: 560,
+            top: 80,
             child: Transform.rotate(
               angle: -0.18,
               child: Container(
-                width: 560,
-                height: 340,
+                width: 400,
+                height: 320,
                 decoration: BoxDecoration(color: sage, borderRadius: BorderRadius.circular(36)),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -537,7 +604,7 @@ class _FeatureGraphic extends StatelessWidget {
             top: 170,
             child: Text(
               'Cat Logic',
-              style: TextStyle(fontFamily: 'Inter', fontSize: 84, fontWeight: FontWeight.w700, color: ink, decoration: TextDecoration.none),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 72, fontWeight: FontWeight.w700, color: ink, decoration: TextDecoration.none),
             ),
           ),
         ],
@@ -579,20 +646,15 @@ class _IconPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFFF6F1E8));
-    final sage = RRect.fromRectAndRadius(
-      Rect.fromLTWH(size.width * 0.1, size.height * 0.16, size.width * 0.8, size.height * 0.7),
-      Radius.circular(size.width * 0.16),
-    );
-    canvas.drawRRect(sage, Paint()..color = const Color(0xFF8FB58A));
+    canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFF8FB58A));
     paintCurledCat(
       canvas,
-      Rect.fromLTWH(size.width * 0.12, size.height * 0.14, size.width * 0.76, size.height * 0.7),
+      Rect.fromLTWH(size.width * 0.1, size.height * 0.08, size.width * 0.8, size.height * 0.8),
       coat: const Color(0xFFC4623A),
       ink: const Color(0xFF3E342C),
       cushion: const Color(0xFFE7D3BE),
     );
-    paintSparkle(canvas, Offset(size.width * 0.74, size.height * 0.2), size.width * 0.045, const Color(0xFFF6F1E8));
+    paintSparkle(canvas, Offset(size.width * 0.78, size.height * 0.16), size.width * 0.07, const Color(0xFFF6F1E8));
   }
 
   @override

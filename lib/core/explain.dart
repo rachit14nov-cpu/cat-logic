@@ -109,10 +109,10 @@ String explainStep(LogicStep step, List<String> regionNames) {
       return 'The ${regionName(step.regionIds.single)} region has only one cell left for its cat.';
     case StepKind.regionInRow:
       final row = rows.single + 1;
-      return '${regionPhrase(step.regionIds)} only fits in row $row, so the other cells in row $row can\'t hold a cat.';
+      return '${cap(regionName(step.regionIds.single))} fits only in row $row, so no other cell in row $row can hold a cat.';
     case StepKind.regionInColumn:
       final column = cols.single + 1;
-      return '${regionPhrase(step.regionIds)} only fits in column $column, so the other cells in column $column can\'t hold a cat.';
+      return '${cap(regionName(step.regionIds.single))} fits only in column $column, so no other cell in column $column can hold a cat.';
     case StepKind.rowInRegion:
       return 'Row ${rows.single + 1} can only hold a cat in the ${regionName(step.regionIds.single)} region, so the rest of that region can\'t hold a cat.';
     case StepKind.columnInRegion:

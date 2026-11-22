@@ -1,0 +1,3 @@
+// Generated from config/application_id.txt. Edit that file, then run
+// `dart run tool/apply_application_id.dart`.
+CATLOGIC_APPLICATION_ID=com.tinybitlabs.catlogic

@@ -332,22 +332,32 @@ void main() {
         caption: '500+ puzzles, 5x5 to 10x10',
         scene: Padding(
           padding: const EdgeInsets.fromLTRB(60, 0, 60, 96),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Transform.translate(
-                offset: const Offset(-280, -36),
-                child: Transform.rotate(angle: -0.06, child: SizedBox(width: 400, height: 400, child: board(five, fiveMarks))),
-              ),
-              Transform.translate(
-                offset: const Offset(-200, 28),
-                child: Transform.rotate(angle: -0.02, child: SizedBox(width: 500, height: 500, child: board(seven, sevenMarks))),
-              ),
-              Transform.translate(
-                offset: const Offset(160, 12),
-                child: SizedBox(width: 640, height: 640, child: board(ten, tenMarks)),
-              ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              const gap = 22.0;
+              const chrome = 68.0;
+              final width = constraints.maxWidth;
+              final height = constraints.maxHeight;
+              final tenSide = (width - 36).clamp(0.0, height * 0.56);
+              final top = height - gap - tenSide - chrome;
+              final sevenSide = (top - chrome).clamp(0.0, (width - gap) * 0.56 - 36);
+              final fiveSide = sevenSide * 5 / 7;
+              return Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _SizeCard(label: '5x5', side: fiveSide, child: board(five, fiveMarks)),
+                      const SizedBox(width: gap),
+                      _SizeCard(label: '7x7', side: sevenSide, child: board(seven, sevenMarks)),
+                    ],
+                  ),
+                  const SizedBox(height: gap),
+                  _SizeCard(label: '10x10', side: tenSide, child: board(ten, tenMarks)),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -440,6 +450,36 @@ List<CellMark> placedOne(Puzzle puzzle) {
   final marks = List<CellMark>.filled(puzzle.cellCount, CellMark.empty);
   marks[cats[0]] = CellMark.cat;
   return withAutoMarks(puzzle, marks, enabled: true);
+}
+
+class _SizeCard extends StatelessWidget {
+  const _SizeCard({required this.label, required this.side, required this.child});
+
+  final String label;
+  final double side;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBF5),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: const [BoxShadow(color: Color(0xFFD9CBB8), blurRadius: 0, offset: Offset(0, 8))],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: const TextStyle(fontFamily: 'Inter', fontSize: 26, fontWeight: FontWeight.w700, color: Color(0xFF3E342C))),
+            const SizedBox(height: 8),
+            SizedBox(width: side, height: side, child: child),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _Callout extends StatelessWidget {

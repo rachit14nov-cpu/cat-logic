@@ -63,8 +63,9 @@ class AdPacing {
     required DateTime now,
     required DateTime? lastInterstitialAt,
     required int interstitialsToday,
+    int finishedCampaignCount = openingLevels,
   }) {
-    if (midPuzzle) return false;
+    if (midPuzzle || finishedCampaignCount < openingLevels) return false;
     final minLevel = remote.integer(minLevelKey, fallback: 9);
     final every = remote.integer(everyKey, fallback: 2);
     final minGap = remote.integer(intervalKey, fallback: 90000);
@@ -89,5 +90,33 @@ class AdPacing {
     if (campaignLevel != null && campaignLevel <= openingLevels) return false;
     final raw = remote.string(rewardedKey, fallback: 'hint,extraHeart,secondDailyAttempt');
     return raw.split(',').contains(reason.name);
+  }
+
+  /// Daily wins never qualify. Neither does any win before 8 campaign puzzles are finished.
+  bool interstitialAfterWin({
+    required bool daily,
+    required bool removeAds,
+    required int finishedCampaignCount,
+    required int puzzleNumber,
+    required bool midPuzzle,
+    required DateTime now,
+    required DateTime? lastInterstitialAt,
+    required int interstitialsToday,
+  }) {
+    if (daily || removeAds) return false;
+    return allowInterstitial(
+      completedLevelNumber: puzzleNumber,
+      midPuzzle: midPuzzle,
+      now: now,
+      lastInterstitialAt: lastInterstitialAt,
+      interstitialsToday: interstitialsToday,
+      finishedCampaignCount: finishedCampaignCount,
+    );
+  }
+
+  /// Remove-ads hides the home and puzzle-list banners. The puzzle screen never has one.
+  bool menuBannerVisible({required bool removeAds, required int finishedCampaignCount, required AdSurface surface}) {
+    if (removeAds) return false;
+    return allowBanner(surface, completedCampaignLevels: finishedCampaignCount);
   }
 }

@@ -6,7 +6,6 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../ads/ad_units.dart';
 import '../core/ad_pacing.dart';
 import '../core/daily.dart';
-import '../core/economy.dart';
 import 'ad_service.dart';
 import 'analytics_service.dart';
 
@@ -105,7 +104,7 @@ class MobileAdsService extends ChangeNotifier implements AdService {
 
   @override
   Widget? bannerWidget(AdSurface surface) {
-    if (!_ready || _adsRemoved || !pacing.allowBanner(surface, completedCampaignLevels: _campaignCompleted)) {
+    if (!_ready || !pacing.menuBannerVisible(removeAds: _adsRemoved, finishedCampaignCount: _campaignCompleted, surface: surface)) {
       return null;
     }
     final banner = _banners[surface];
@@ -118,21 +117,22 @@ class MobileAdsService extends ChangeNotifier implements AdService {
     required int completedLevelNumber,
     required bool midPuzzle,
     required DateTime now,
+    bool daily = false,
   }) async {
     final day = isoDate(now);
     if (_shownDay != day) {
       _shownDay = day;
       _shownToday = 0;
     }
-    final allowed = shouldShowForcedAd(
+    final allowed = pacing.interstitialAfterWin(
+      daily: daily,
       removeAds: _adsRemoved,
-      pacingAllows: pacing.allowInterstitial(
-        completedLevelNumber: completedLevelNumber,
-        midPuzzle: midPuzzle,
-        now: now,
-        lastInterstitialAt: _lastInterstitial,
-        interstitialsToday: _shownToday,
-      ),
+      finishedCampaignCount: _campaignCompleted,
+      puzzleNumber: completedLevelNumber,
+      midPuzzle: midPuzzle,
+      now: now,
+      lastInterstitialAt: _lastInterstitial,
+      interstitialsToday: _shownToday,
     );
     final ad = _interstitial;
     if (!allowed || !_ready || ad == null) {

@@ -47,5 +47,47 @@ void main() {
     expect(pacing.allowRewarded(RewardReason.hint, campaignLevel: 9), isTrue);
     expect(pacing.allowRewarded(RewardReason.secondDailyAttempt, completedCampaignLevels: 7), isFalse);
     expect(pacing.allowRewarded(RewardReason.secondDailyAttempt, completedCampaignLevels: 8), isTrue);
+    expect(
+      pacing.allowInterstitial(
+        completedLevelNumber: 10,
+        midPuzzle: false,
+        now: now,
+        lastInterstitialAt: null,
+        interstitialsToday: 0,
+        finishedCampaignCount: 7,
+      ),
+      isFalse,
+    );
+    expect(
+      pacing.interstitialAfterWin(
+        daily: true,
+        removeAds: false,
+        finishedCampaignCount: 20,
+        puzzleNumber: 12,
+        midPuzzle: false,
+        now: now,
+        lastInterstitialAt: null,
+        interstitialsToday: 0,
+      ),
+      isFalse,
+    );
+    expect(
+      pacing.interstitialAfterWin(
+        daily: false,
+        removeAds: true,
+        finishedCampaignCount: 20,
+        puzzleNumber: 12,
+        midPuzzle: false,
+        now: now,
+        lastInterstitialAt: null,
+        interstitialsToday: 0,
+      ),
+      isFalse,
+    );
+    expect(pacing.menuBannerVisible(removeAds: true, finishedCampaignCount: 20, surface: AdSurface.menu), isFalse);
+    expect(pacing.menuBannerVisible(removeAds: true, finishedCampaignCount: 20, surface: AdSurface.levelSelect), isFalse);
+    expect(pacing.menuBannerVisible(removeAds: false, finishedCampaignCount: 20, surface: AdSurface.menu), isTrue);
+    expect(pacing.menuBannerVisible(removeAds: false, finishedCampaignCount: 20, surface: AdSurface.game), isFalse);
+    expect(pacing.menuBannerVisible(removeAds: false, finishedCampaignCount: 3, surface: AdSurface.levelSelect), isFalse);
   });
 }

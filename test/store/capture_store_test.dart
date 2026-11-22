@@ -21,6 +21,7 @@ late Puzzle five;
 late Puzzle seven;
 late Puzzle ten;
 late Puzzle daily;
+late Puzzle hintPuzzle;
 late List<CellMark> sevenMarks;
 late List<CellMark> fiveMarks;
 late List<CellMark> tenMarks;
@@ -100,13 +101,11 @@ Widget board(
   Set<int> emphasis = const {},
   Set<int> dim = const {},
   bool patterns = false,
+  bool alignTop = false,
   CatPalette? palette,
 }) {
   final theme = palette ?? meadow;
-  return CatTheme(
-    palette: theme,
-    patterns: patterns || theme.colorBlindSafe,
-    child: BoardView(
+  final view = BoardView(
       puzzle: puzzle,
       marks: marks,
       palette: theme,
@@ -116,7 +115,21 @@ Widget board(
       dim: dim,
       onTap: (_) {},
       onDoubleTap: (_) {},
-    ),
+    );
+  return CatTheme(
+    palette: theme,
+    patterns: patterns || theme.colorBlindSafe,
+    child: alignTop
+        ? LayoutBuilder(
+            builder: (context, constraints) {
+              final side = constraints.maxWidth;
+              return Align(
+                alignment: Alignment.topCenter,
+                child: SizedBox(width: side, height: side, child: view),
+              );
+            },
+          )
+        : view,
   );
 }
 
@@ -154,8 +167,12 @@ void main() {
     fiveMarks = placed(five, 2);
     tenMarks = placed(ten, 4);
     dailyMarks = placed(daily, 2);
+    hintPuzzle = catalog.levelById('7-023').toPuzzle();
     step = nextDeduction(seven, List<int>.filled(seven.cellCount, 0))!;
     regionNames = [for (final look in meadow.looks) look.name];
+    for (final entry in [('5x5', five), ('7x7', seven), ('10x10', ten), ('daily', daily), ('hint', hintPuzzle)]) {
+      expect(Solver.solutions(entry.$2, limit: 2), hasLength(1), reason: entry.$1);
+    }
   });
 
   testWidgets('01 fair ads', (tester) async {
@@ -166,7 +183,7 @@ void main() {
         caption: 'Fair ads. Never mid-puzzle.',
         scene: Stack(
           children: [
-            Padding(padding: const EdgeInsets.fromLTRB(60, 0, 60, 96), child: board(seven, sevenMarks)),
+            Padding(padding: const EdgeInsets.fromLTRB(60, 0, 60, 96), child: board(seven, sevenMarks, alignTop: true)),
             Positioned(right: 60, bottom: 96, child: _Badge(text: 'No ads mid-puzzle', palette: meadow)),
           ],
         ),
@@ -209,7 +226,13 @@ void main() {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(60, 0, 60, 180),
-              child: board(seven, _catIn(seven, step.focusCells.isEmpty ? step.resultCells : step.focusCells)),
+              child: board(seven, _catIn(seven, step.focusCells.isEmpty ? step.resultCells : step.focusCells), alignTop: true),
+            ),
+            const Positioned(
+              left: 0,
+              right: 0,
+              bottom: 190,
+              child: Center(child: CustomPaint(size: Size(28, 70), painter: _UpArrow())),
             ),
             const Positioned(
               left: 60,
@@ -225,14 +248,14 @@ void main() {
   });
 
   testWidgets('04 hints', (tester) async {
-    final puzzle = Puzzle(5, const [
-      1, 1, 0, 2, 2, //
-      1, 1, 0, 2, 2, //
-      1, 3, 0, 2, 2, //
-      3, 3, 3, 4, 4, //
-      3, 3, 4, 4, 4,
-    ]);
-    final hint = LogicState(puzzle).next(allowContradiction: false)!;
+    final puzzle = hintPuzzle;
+    expect(Solver.solutions(puzzle, limit: 2), hasLength(1));
+    final hint = analyzePuzzle(puzzle).steps.firstWhere(
+      (item) => item.kind == StepKind.regionInRow && item.regionIds.single == 3 && item.rows.single == 3,
+    );
+    expect(hint.focusCells, [25, 26]);
+    expect(explainStep(hint, regionNames), 'Teal fits only in row 4, so no other cell in row 4 can hold a cat.');
+    final row = {for (var column = 0; column < puzzle.size; column++) 3 * puzzle.size + column};
     await capture(
       tester,
       const Size(1080, 1920),
@@ -247,7 +270,8 @@ void main() {
                   puzzle,
                   List<CellMark>.filled(puzzle.cellCount, CellMark.empty),
                   focus: hint.focusCells.toSet(),
-                  dim: hint.resultCells.toSet(),
+                  dim: row.difference(hint.focusCells.toSet()),
+                  alignTop: true,
                 ),
               ),
             ),
@@ -312,16 +336,16 @@ void main() {
             alignment: Alignment.center,
             children: [
               Transform.translate(
-                offset: const Offset(-180, 40),
-                child: Transform.rotate(angle: -0.16, child: SizedBox(width: 640, height: 640, child: board(five, fiveMarks))),
+                offset: const Offset(-280, -36),
+                child: Transform.rotate(angle: -0.06, child: SizedBox(width: 400, height: 400, child: board(five, fiveMarks))),
               ),
               Transform.translate(
-                offset: const Offset(20, -20),
-                child: Transform.rotate(angle: 0.02, child: SizedBox(width: 720, height: 720, child: board(seven, sevenMarks))),
+                offset: const Offset(-200, 28),
+                child: Transform.rotate(angle: -0.02, child: SizedBox(width: 500, height: 500, child: board(seven, sevenMarks))),
               ),
               Transform.translate(
-                offset: const Offset(200, 30),
-                child: Transform.rotate(angle: 0.14, child: SizedBox(width: 820, height: 820, child: board(ten, tenMarks))),
+                offset: const Offset(160, 12),
+                child: SizedBox(width: 640, height: 640, child: board(ten, tenMarks)),
               ),
             ],
           ),
@@ -341,9 +365,9 @@ void main() {
           padding: const EdgeInsets.fromLTRB(60, 0, 60, 96),
           child: Row(
             children: [
-              Expanded(child: _LabeledBoard(label: 'Standard', child: board(five, fiveMarks))),
+              Expanded(child: _LabeledBoard(label: 'Standard', child: board(five, fiveMarks, alignTop: true))),
               const SizedBox(width: 24),
-              Expanded(child: _LabeledBoard(label: 'Color-blind', child: board(five, fiveMarks, patterns: true, palette: beacon))),
+              Expanded(child: _LabeledBoard(label: 'Color-blind', child: board(five, fiveMarks, patterns: true, palette: beacon, alignTop: true))),
             ],
           ),
         ),
@@ -468,6 +492,29 @@ class _OfflineChip extends StatelessWidget {
       ),
     );
   }
+}
+
+class _UpArrow extends CustomPainter {
+  const _UpArrow();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF3E342C)
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(Offset(size.width / 2, size.height), Offset(size.width / 2, 12), paint);
+    final head = Path()
+      ..moveTo(size.width / 2, 0)
+      ..lineTo(4, 18)
+      ..moveTo(size.width / 2, 0)
+      ..lineTo(size.width - 4, 18);
+    canvas.drawPath(head, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _FlamePainter extends CustomPainter {

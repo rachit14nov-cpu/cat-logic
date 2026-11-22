@@ -121,13 +121,12 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       'id': request.level.id,
       'ms': elapsed,
     });
-    if (!request.daily) {
-      await widget.services.ads.maybeShowInterstitial(
-        completedLevelNumber: request.number,
-        midPuzzle: false,
-        now: DateTime.now(),
-      );
-    }
+    await widget.services.ads.maybeShowInterstitial(
+      completedLevelNumber: request.number,
+      midPuzzle: false,
+      now: DateTime.now(),
+      daily: request.daily,
+    );
     if (mounted) setState(() {});
   }
 

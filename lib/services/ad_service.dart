@@ -23,6 +23,7 @@ abstract class AdService {
     required int completedLevelNumber,
     required bool midPuzzle,
     required DateTime now,
+    bool daily = false,
   });
 
   Future<bool> showRewarded(RewardReason reason, {int? campaignLevel});
@@ -61,8 +62,9 @@ class NoopAdService implements AdService {
     required int completedLevelNumber,
     required bool midPuzzle,
     required DateTime now,
+    bool daily = false,
   }) async {
-    if (adsRemoved || midPuzzle) return false;
+    if (daily || adsRemoved || midPuzzle || campaignCompleted < AdPacing.openingLevels) return false;
     return pacing.allowInterstitial(
       completedLevelNumber: completedLevelNumber,
       midPuzzle: midPuzzle,
